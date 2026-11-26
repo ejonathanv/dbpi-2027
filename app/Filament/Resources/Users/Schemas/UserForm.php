@@ -22,7 +22,8 @@ class UserForm
                 ->label($module->getLabel())
                 ->options(ModulePermissionLevel::class)
                 ->placeholder('Sin acceso')
-                ->native(false))
+                ->native(false)
+                ->disabled(fn (Get $get): bool => ! self::isUsuarioType($get)))
             ->all();
 
         return $schema
@@ -52,7 +53,7 @@ class UserForm
                         Select::make('user_type')
                             ->label('Tipo de usuario')
                             ->options(UserType::class)
-                            ->default(UserType::Usuario)
+                            ->default(UserType::Usuario->value)
                             ->required()
                             ->native(false)
                             ->live(),
@@ -62,19 +63,70 @@ class UserForm
                             ->columnSpanFull(),
                     ]),
                 Section::make('Permisos por módulo')
-                    ->description('Solo aplica a usuarios tipo «Usuario».')
                     ->columnSpanFull()
                     ->columns(2)
-                    ->visible(fn (Get $get): bool => $get('user_type') === UserType::Usuario->value)
-                    ->schema($modulePermissionFields),
+                    ->visible(fn (Get $get): bool => ! self::isContactoType($get))
+                    ->description(function (Get $get): string {
+                        if (self::isAdministratorType($get)) {
+                            return 'Los administradores tienen acceso completo a todos los módulos; no requieren asignación individual.';
+                        }
+
+                        return 'Define el nivel de acceso por cada módulo (ver, editar o eliminar).';
+                    })
+                    ->schema([
+                        ...$modulePermissionFields,
+                        Placeholder::make('permisos_admin_hint')
+                            ->label('')
+                            ->visible(fn (Get $get): bool => self::isAdministratorType($get))
+                            ->content('Cambia el tipo a «Usuario» para asignar permisos granulares por módulo.')
+                            ->columnSpanFull(),
+                    ]),
                 Section::make('Contacto externo')
                     ->columnSpanFull()
-                    ->visible(fn (Get $get): bool => $get('user_type') === UserType::Contacto->value)
+                    ->visible(fn (Get $get): bool => self::isContactoType($get))
                     ->schema([
                         Placeholder::make('contacto_info')
                             ->label('')
                             ->content('El acceso al portal y los permisos de contacto se configurarán cuando estén disponibles los módulos CRM y Helpdesk.'),
                     ]),
             ]);
+    }
+
+    public static function resolveUserTypeState(mixed $state): ?UserType
+    {
+        if ($state instanceof UserType) {
+            return $state;
+        }
+
+        if (is_string($state) && $state !== '') {
+            return UserType::tryFrom($state);
+        }
+
+        return null;
+    }
+
+    public static function isUsuarioType(Get $get): bool
+    {
+        $type = self::resolveUserTypeState($get('user_type'));
+
+        if ($type !== null) {
+            return $type === UserType::Usuario;
+        }
+
+        return true;
+    }
+
+    public static function isAdministratorType(Get $get): bool
+    {
+        $type = self::resolveUserTypeState($get('user_type'));
+
+        return $type === UserType::Administrador;
+    }
+
+    public static function isContactoType(Get $get): bool
+    {
+        $type = self::resolveUserTypeState($get('user_type'));
+
+        return $type === UserType::Contacto;
     }
 }

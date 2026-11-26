@@ -12,6 +12,8 @@ trait SyncsUserModulePermissions
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $data['user_type'] = $this->record->user_type?->value;
+
         $data['module_permissions'] = [];
 
         foreach (AppModule::cases() as $module) {
@@ -24,7 +26,7 @@ trait SyncsUserModulePermissions
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $this->modulePermissions = $data['module_permissions'] ?? [];
+        $this->modulePermissions = $this->normalizeModulePermissions($data['module_permissions'] ?? []);
         unset($data['module_permissions']);
 
         return $data;
@@ -32,10 +34,31 @@ trait SyncsUserModulePermissions
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $this->modulePermissions = $data['module_permissions'] ?? [];
+        $this->modulePermissions = $this->normalizeModulePermissions($data['module_permissions'] ?? []);
         unset($data['module_permissions']);
 
         return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $permissions
+     * @return array<string, string|null>
+     */
+    protected function normalizeModulePermissions(array $permissions): array
+    {
+        $normalized = [];
+
+        foreach (AppModule::cases() as $module) {
+            $level = $permissions[$module->value] ?? null;
+
+            if ($level instanceof \BackedEnum) {
+                $level = $level->value;
+            }
+
+            $normalized[$module->value] = filled($level) ? (string) $level : null;
+        }
+
+        return $normalized;
     }
 
     protected function afterCreate(): void
