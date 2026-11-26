@@ -3,7 +3,7 @@
 **DBPI** — Dynacom Business Process Integration
 
 > Documento vivo: se actualiza conforme avance el desarrollo.  
-> **Última revisión:** 2025-11-26  
+> **Última revisión:** 2026-11-26  
 > **Stack:** Laravel 12 + Filament 5 (panel `/admin`)
 
 ---
@@ -16,11 +16,11 @@ Aplicación modular para operación interna de negocio. Los módulos comparten d
 
 | Módulo | Código interno | Estado | Prioridad |
 |--------|----------------|--------|-----------|
-| Usuarios y acceso | `core` | **En desarrollo (fase 0)** | Alta |
-| Recursos Humanos | `rh` | Pendiente (tras `core`) | Alta |
+| Usuarios y acceso | `core` | **Fase 0 operativa** | Alta |
+| Recursos Humanos | `rh` | **Fase 1 operativa (en pausa)** | Alta |
 | Comercial | `comercial` | Pendiente | — |
 | Helpdesk | `helpdesk` | Pendiente | — |
-| CRM | `crm` | Pendiente | — |
+| CRM | `crm` | **Siguiente en desarrollo** | Alta |
 
 ### 1.2 Principios transversales
 
@@ -84,12 +84,12 @@ Todos los que inician sesión son **usuarios** a nivel técnico (modelo `User`).
 
 ### 2.6 Alcance fase 0 (construcción actual)
 
-- [ ] Extender modelo `User` (tipo de usuario, activo, etc.).
-- [ ] Membresías / permisos por módulo (`view` / `edit` / `delete`).
-- [ ] Filament Resource (o equivalente) para gestión de usuarios (solo administradores).
-- [ ] Policies / autorización en panel acorde a módulo y nivel.
-- [ ] Validación: administrador no puede eliminarse a sí mismo.
-- [ ] Reservar modelo/flujo para **contactos** sin implementar CRM aún (flags o tipo sin rutas).
+- [x] Extender modelo `User` (`user_type`, `is_active`, etc.).
+- [x] Membresías por módulo (`module_memberships`: `view` / `edit` / `delete`) vía enum `AppModule`.
+- [x] Resource Filament **Usuarios** (administradores y flujo según políticas).
+- [x] Autorización en RH: políticas `Company` / `Employee`, membresía `rh` y asignación **empresa ↔ usuario** (`company_user`).
+- [ ] Validación explícita: administrador no puede eliminarse a sí mismo (revisar / endurecer en UI).
+- [x] Tipo `contacto` reservado en enum; sin rutas funcionales hasta CRM.
 
 ### 2.7 Fuera de alcance fase 0
 
@@ -98,38 +98,47 @@ Todos los que inician sesión son **usuarios** a nivel técnico (modelo `User`).
 
 ### 2.8 Criterios de aceptación fase 0
 
-- [ ] Administrador puede CRUD de usuarios (excepto auto-eliminación).
-- [ ] Asignar tipo `usuario` | `administrador` | `contacto`.
-- [ ] Asignar permisos por módulo a usuarios tipo `usuario`.
-- [ ] Menú y acciones Filament respetan permisos (al menos en un módulo de prueba o globalmente preparado).
-- [ ] Documentación y seeds de usuario administrador inicial.
+- [x] Administrador puede CRUD de usuarios.
+- [x] Asignar tipo `usuario` | `administrador` | `contacto`.
+- [x] Asignar permisos por módulo a usuarios tipo `usuario`.
+- [x] Menú y acciones Filament respetan permisos en módulo **RH** (y placeholders en otros módulos).
+- [ ] Documentación y seeds de usuario administrador inicial (definir seed estándar en despliegue).
 
 ---
 
 ## 3. Módulo: Recursos Humanos (`rh`)
 
+> **Estado (2026-11-26):** fase 1 **implementada y dada por cerrada por ahora**. Mejoras futuras (catálogo genérico de tipos de documento, historial de sueldo, etc.) quedan en §3.3.
+
 ### 3.1 Objetivo
 
 Gestionar empresas registradas en el sistema, sus empleados, datos personales y laborales, compensación y expediente documental digital.
 
-### 3.2 Alcance fase 1 (tras módulo usuarios)
+### 3.2 Implementado en fase 1
 
-- CRUD de **empresas** (catálogo maestro del módulo RH).
-- CRUD de **empleados** vinculados a una empresa.
-- Información **personal** del empleado.
-- Información de **compensación / sueldo** (estructura base; detalle en §3.4).
-- **Expediente documental** por empleado: subida, clasificación y consulta de archivos de cualquier tipo permitido (INE, estudio socioeconómico, constancia, contratos, etc.).
+| Área | Qué hay en el panel |
+|------|---------------------|
+| **Empresas** | CRUD `CompanyResource`; relation managers **Sucursales**, **Departamentos**, **Puestos** |
+| **Empleados** | Entrada por empresa (`BrowseCompanies` → listado); alta rápida y edición completa |
+| **Ficha empleado** | Pestañas: personal (fotos), salario, puesto y ubicación, banco, IMSS, vacaciones, adjuntos |
+| **Catálogos por empresa** | Sucursal, departamento, puesto (select con alta rápida en empleado) |
+| **Fotos** | Hasta 3; rejilla tipo Drive; edición de imagen; reordenar |
+| **Expediente digital** | Adjuntos por empleado (`employee_attachments`); rejilla tipo Drive; nombre, fecha, renombrar / eliminar |
+| **Acceso** | Usuario `usuario` con permiso `rh` solo ve **empresas asignadas** en `company_user` |
+| **Almacenamiento** | Disco `public`; rutas `employees/{id}/photos` y `employees/{id}/attachments` |
 
-### 3.3 Fuera de alcance fase 1 (pendiente RH)
+### 3.3 Fuera de alcance / pendiente RH (no bloquea otros módulos)
 
 - Nómina, timbrado, INCAP, prestaciones calculadas.
-- Organigrama, puestos y jerarquías.
-- Asistencia, vacaciones y permisos.
+- Organigrama y **jerarquías** (el catálogo de **puestos** por empresa sí está; no hay árbol de reportes).
+- **Historial de compensación** (tabla `employee_compensations`); hoy sueldo en campos del empleado.
+- **Catálogo genérico** `document_types` y modelo polimórfico `documents` (hoy adjuntos con `title` libre).
+- Asistencia y workflow formal de permisos (vacaciones: campos informativos básicos).
 - Portal del empleado (autoservicio).
 - Firma electrónica de documentos.
 - Integración con Comercial / CRM / Helpdesk (ver §7).
 
-### 3.4 Entidades propuestas
+### 3.4 Entidades (implementadas y propuestas)
 
 #### Empresa (`companies` o equivalente)
 
@@ -140,44 +149,47 @@ Gestionar empresas registradas en el sistema, sus empleados, datos personales y 
 | Dirección, contacto | Opcional fase 1 |
 | Activo / inactivo | Soft delete o flag `is_active` |
 
+#### Catálogos por empresa (implementados)
+
+| Tabla | Uso |
+|-------|-----|
+| `company_branches` | Sucursales |
+| `company_departments` | Departamentos |
+| `company_positions` | Puestos reutilizables en empleados |
+
 #### Empleado (`employees`)
 
 | Campo / aspecto | Notas |
 |---------------|--------|
 | `company_id` | Pertenece a una empresa |
-| Datos personales | Nombre(s), apellidos, CURP, RFC, NSS, fecha nacimiento, género, estado civil, contacto (email, teléfono), domicilio |
-| Datos laborales | Fecha ingreso, fecha baja (nullable), número de empleado interno, estatus (activo, baja, suspendido) |
-| Relación 1:N con documentos y con registros de sueldo |
+| Datos personales | Nombre(s), apellidos, CURP, RFC, NSS, fecha nacimiento, género, estado civil, contacto, domicilio |
+| Datos laborales | Número de empleado, `company_position_id`, sucursal, departamento, estatus, fechas ingreso / baja |
+| Compensación (en empleado) | `monthly_salary`, `salary_currency` |
+| Banco / IMSS / vacaciones | Campos dedicados en la ficha (sin nómina) |
+| Relaciones | `employee_photos`, `employee_attachments` |
 
-#### Compensación (`employee_compensations` o campos en empleado — por definir en implementación)
-
-| Campo / aspecto | Notas |
-|---------------|--------|
-| Sueldo base, periodicidad (mensual, quincenal, etc.) | Histórico recomendado (nueva fila al cambiar sueldo) |
-| Moneda | Default MXN |
-| Vigencia (`effective_from`, `effective_to`) | Para historial |
-| Notas internas | No visibles en portal futuro sin permiso |
-
-#### Tipo de documento (`document_types`) — catálogo genérico
+#### Foto (`employee_photos`)
 
 | Campo / aspecto | Notas |
 |---------------|--------|
-| Nombre, código slug | Ej. `ine`, `estudio_socioeconomico`, `constancia` |
-| Módulo / contexto | `rh` (extensible a otros módulos) |
-| Requiere vencimiento | Opcional |
-| Activo | Para ocultar tipos obsoletos sin borrar historial |
+| `path`, `sort_order` | Máx. 3 por empleado en UI |
 
-#### Documento (`documents` — polimórfico o `employee_documents` + diseño genérico)
+#### Adjunto (`employee_attachments`)
 
 | Campo / aspecto | Notas |
 |---------------|--------|
-| Entidad dueña | Empleado (fase 1); patrón polimórfico `documentable` para reutilizar en otros módulos |
-| `document_type_id` | Clasificación |
-| Archivo | Disco configurado (`local` / `s3` vía `config/filament.php`) |
-| Nombre original, MIME, tamaño | Metadata |
-| Fecha emisión / vencimiento | Opcional según tipo |
-| Subido por (`user_id`) | Usuario del panel |
-| Notas | Texto libre |
+| `title`, `file_path`, `original_name` | Nombre visible y archivo en disco |
+| `mime_type`, `file_size`, `uploaded_by`, `notes` | Metadata y auditoría básica |
+
+#### Compensación con historial (`employee_compensations`) — *propuesto, no implementado*
+
+| Campo / aspecto | Notas |
+|---------------|--------|
+| Sueldo, periodicidad, vigencia | Histórico al cambiar sueldo (futuro) |
+
+#### Tipo de documento (`document_types`) y `documents` polimórfico — *propuesto, no implementado*
+
+Sustituido en fase 1 práctica por adjuntos con título libre; conviene alinear con CRM u otros módulos en una iteración posterior.
 
 ### 3.5 Reglas de negocio (borrador)
 
@@ -189,17 +201,18 @@ Gestionar empresas registradas en el sistema, sus empleados, datos personales y 
 ### 3.6 UI Filament (fase 1)
 
 - Grupo de navegación: **Recursos Humanos**
-- Resources: Empresas, Empleados, Tipos de documento
-- En empleado: pestañas o relation managers para **Compensación** y **Documentos** (upload + lista + descarga)
-- Autorización según membresías del módulo `rh` (§2)
+- Resources: **Empresas**, **Empleados** (por empresa asignada)
+- Empresa: relation managers Sucursales, Departamentos, Puestos
+- Empleado: formulario por pestañas (sin resource de tipos de documento)
+- Autorización: `CompanyPolicy`, `EmployeePolicy`, `company_user`, `ModuleMembership` (`rh`)
 
 ### 3.7 Criterios de aceptación fase 1
 
-- [ ] Crear/editar/listar empresas
-- [ ] Crear/editar/listar empleados por empresa
-- [ ] Registrar y consultar historial de sueldo (al menos un registro vigente)
-- [ ] Subir documento con tipo seleccionable y descargar desde el panel
-- [ ] Seed de tipos de documento RH de ejemplo
+- [x] Crear/editar/listar empresas
+- [x] Crear/editar/listar empleados por empresa
+- [x] Sueldo base en ficha (sin historial)
+- [x] Subir fotos y adjuntos; consultar / descargar desde el panel
+- [ ] Seed de tipos de documento RH (no aplica hasta catálogo genérico)
 
 ---
 
@@ -227,15 +240,43 @@ Gestionar empresas registradas en el sistema, sus empleados, datos personales y 
 
 ---
 
-## 6. Módulo: CRM — *Pendiente*
+## 6. Módulo: CRM (`crm`)
 
-> Placeholder hasta definir alcance.
+> **Estado (2026-11-26):** siguiente foco de desarrollo. En el panel existe página de módulo (`CrmModuleOverview`); sin entidades ni resources aún.
 
-**Ideas iniciales (sin compromiso):**
+### 6.1 Objetivo
 
-- Prospectos, clientes, oportunidades, actividades.
-- Cuentas y **contactos**; los contactos podrán tener usuario tipo `contacto` (§2.5).
-- Posible uso de la misma entidad **Empresa** o modelo `Account` compartido (decisión pendiente para evitar duplicar razones sociales).
+Gestionar **cuentas** (clientes / prospectos), **contactos**, oportunidades y actividades comerciales, como base para Comercial y Helpdesk.
+
+### 6.2 Alcance fase 1 propuesto (CRM)
+
+| Entidad (borrador) | Descripción |
+|--------------------|-------------|
+| **Cuenta** (`crm_accounts` o similar) | Cliente o prospecto: razón social, nombre comercial, RFC opcional, estatus, asignado a usuario interno |
+| **Contacto** (`crm_contacts`) | Personas ligadas a una cuenta; email, teléfono; flags para usuario portal futuro |
+| **Actividad** (`crm_activities`) | Llamadas, reuniones, notas con fecha y responsable (mínimo viable) |
+
+**Opcional en fase 1** (según prioridad): pipeline de **oportunidades** (`crm_opportunities`) con etapas simples.
+
+### 6.3 Reglas y decisiones CRM (a cerrar al iniciar)
+
+1. **Empresa RH vs cuenta CRM:** hoy `companies` es catálogo **empleador** en RH. Las cuentas CRM serán modelo **separado** salvo decisión explícita en §9.1 (evitar mezclar empleador con cliente).
+2. **Permisos:** reutilizar `module_memberships` con `AppModule::Crm` (`view` / `edit` / `delete`).
+3. **Usuario tipo `contacto`:** definir en fase 1 solo el modelo de contacto; enlace `contact` ↔ `user` cuando exista portal o tickets (§2.5).
+4. **Idioma y UI:** grupo de navegación **CRM**; resources Filament en español.
+
+### 6.4 Fuera de alcance fase 1 CRM
+
+- Campañas de marketing, email masivo, integración telefonía.
+- Portal completo del contacto y tickets (Helpdesk).
+- Sincronización automática con Comercial.
+
+### 6.5 Criterios de aceptación fase 1 CRM
+
+- [ ] CRUD de cuentas y contactos con relación cuenta ↔ contactos
+- [ ] Registro de actividades por cuenta o contacto
+- [ ] Menú y políticas según membresía `crm`
+- [ ] Página resumen del módulo enlazada a resources reales (sustituir placeholder)
 
 ---
 
@@ -300,12 +341,13 @@ erDiagram
 | 2025-11-25 | Requisito de idioma: aplicación completa en español. |
 | 2025-11-25 | Panel Filament en español vía `APP_LOCALE=es` (Laravel). |
 | 2025-11-26 | §2 Usuarios y acceso: tipos Usuario, Administrador y Contacto; membresías por módulo; orden de desarrollo (core antes que RH). |
+| 2026-11-26 | RH fase 1 documentada como operativa (empresas, empleados, catálogos, expediente digital). Siguiente módulo: **CRM** (§6 ampliado). |
 
 ---
 
 ## 11. Próximos pasos de desarrollo
 
-1. **Módulo usuarios (`core`):** modelo, tipos, membresías por módulo, Resource Filament, regla anti auto-eliminación del administrador.
-2. Migraciones y modelos RH: Empresa, Empleado, Compensación, TipoDocumento, Documento.
-3. Filament Resources RH (documentos, sueldo) con políticas ligadas a §2.
-4. Revisar decisiones abiertas (§9.1).
+1. **CRM fase 1:** migraciones y modelos (cuenta, contacto, actividad); policies; Resources Filament; permisos `crm` en usuarios (ya soportado en formulario de usuario).
+2. Cerrar decisiones §9.1 aplicables al CRM (modelo de cuenta vs `companies` de RH).
+3. **RH (cuando retome):** historial de sueldo, `document_types` genérico, seeds, regla anti auto-eliminación admin.
+4. Helpdesk / Comercial: después de CRM mínimo y definición de contactos.
