@@ -1,0 +1,12 @@
+---
+description: Convención de formularios Filament en el panel admin
+globs: app/Filament/**/*.php
+alwaysApply: false
+---
+
+# Formularios Filament (DBPI)
+
+- Los esquemas de recurso (`*Form.php`) deben usar **`Filament\Schemas\Components\Section`** para agrupar campos (fondo/card estándar del panel).
+- El schema raíz suele ir con `->columns(1)`; cada sección define `->columns(2)` (o la rejilla que aplique) y sus campos.
+- No dejar formularios de create/edit con campos sueltos en el schema raíz (sin `Section`), salvo excepción documentada.
+- Nuevos módulos: seguir patrones de `CompanyForm`, `CrmOpportunityForm` y `CrmContactForm`.
