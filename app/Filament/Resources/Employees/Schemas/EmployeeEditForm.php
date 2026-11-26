@@ -8,19 +8,31 @@ use App\Enums\MaritalStatus;
 use App\Enums\SalaryCurrency;
 use App\Models\CompanyBranch;
 use App\Models\CompanyDepartment;
+use App\Models\EmployeeAttachment;
+use App\Models\EmployeePhoto;
+use Filament\Actions\Action;
 use Filament\Forms\Components\BaseFileUpload;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Size;
+use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\Livewire;
 use Throwable;
 
 class EmployeeEditForm
@@ -65,17 +77,33 @@ class EmployeeEditForm
                         ->maxItems(3)
                         ->grid(['default' => 1, 'sm' => 3])
                         ->compact()
-                        ->itemHeaders(false)
+                        ->itemHeaders(true)
+                        ->itemLabel(fn (): ?string => null)
+                        ->extraItemActions(self::driveTileExtraActions(canRename: false, actionName: 'managePhotoDriveItem'))
+                        ->deleteAction(fn (Action $action) => $action->hidden())
                         ->reorderable()
                         ->orderColumn('sort_order')
                         ->defaultItems(0)
+                        ->itemNumbers(false)
                         ->addActionLabel('Agregar foto')
-                        ->extraAttributes(['class' => 'employee-photos-repeater'])
+                        ->extraAttributes(['class' => 'employee-drive-grid employee-photos-repeater'])
                         ->schema([
+                            ViewField::make('photo_preview')
+                                ->hiddenLabel()
+                                ->view('filament.forms.employee-drive-tile')
+                                ->dehydrated(false)
+                                ->viewData(fn (Get $get, ?Model $record): array => self::driveTileViewData(
+                                    $get,
+                                    $record,
+                                    kind: 'photo',
+                                    pathKey: 'path',
+                                )),
                             self::employeePhotoUpload(
                                 FileUpload::make('path')
                                     ->directory(fn (): string => self::storagePath('photos'))
+                                    ->live()
                                     ->required()
+                                    ->hidden(fn (Get $get): bool => filled(self::normalizeUploadPath($get('path'))))
                             ),
                         ])
                         ->columnSpanFull(),
@@ -89,7 +117,7 @@ class EmployeeEditForm
                     TextInput::make('curp')->label('CURP')->maxLength(18),
                     TextInput::make('rfc')->label('RFC')->maxLength(13),
                     TextInput::make('nss')->label('NSS')->maxLength(20),
-                    \Filament\Forms\Components\DatePicker::make('birth_date')->label('Fecha de nacimiento')->native(false),
+                    DatePicker::make('birth_date')->label('Fecha de nacimiento')->native(false),
                     Select::make('gender')->label('Género')->options(EmployeeGender::class)->native(false),
                     Select::make('marital_status')->label('Estado civil')->options(MaritalStatus::class)->native(false),
                     TextInput::make('email')->label('Correo')->email()->maxLength(255),
@@ -145,8 +173,8 @@ class EmployeeEditForm
                         ->options(EmployeeStatus::class)
                         ->required()
                         ->native(false),
-                    \Filament\Forms\Components\DatePicker::make('hire_date')->label('Fecha de ingreso')->native(false),
-                    \Filament\Forms\Components\DatePicker::make('termination_date')->label('Fecha de baja')->native(false),
+                    DatePicker::make('hire_date')->label('Fecha de ingreso')->native(false),
+                    DatePicker::make('termination_date')->label('Fecha de baja')->native(false),
                 ]),
         ];
     }
@@ -229,23 +257,40 @@ class EmployeeEditForm
                         ->relationship('attachments')
                         ->label('Archivos')
                         ->defaultItems(0)
+                        ->grid(['default' => 2, 'sm' => 3, 'lg' => 4])
+                        ->compact()
+                        ->itemHeaders(true)
+                        ->itemLabel(fn (): ?string => null)
+                        ->extraItemActions(self::driveTileExtraActions(actionName: 'manageAttachmentDriveItem'))
+                        ->deleteAction(fn (Action $action) => $action->hidden())
+                        ->itemNumbers(false)
+                        ->addActionLabel('Subir archivo')
+                        ->extraAttributes(['class' => 'employee-drive-grid employee-drive-files'])
                         ->schema([
-                            TextInput::make('title')
-                                ->label('Título')
-                                ->maxLength(255)
-                                ->columnSpanFull(),
-                            self::publicFileUpload(
+                            ViewField::make('file_preview')
+                                ->hiddenLabel()
+                                ->view('filament.forms.employee-drive-tile')
+                                ->dehydrated(false)
+                                ->viewData(fn (Get $get, ?Model $record): array => self::driveTileViewData(
+                                    $get,
+                                    $record,
+                                    kind: 'file',
+                                    pathKey: 'file_path',
+                                )),
+                            Hidden::make('title'),
+                            Hidden::make('original_name'),
+                            self::attachmentFileUpload(
                                 FileUpload::make('file_path')
-                                    ->label('Archivo')
                                     ->directory(fn (): string => self::storagePath('attachments'))
-                                    ->downloadable()
-                                    ->openable()
+                                    ->live()
                                     ->required()
-                            )->columnSpanFull(),
+                                    ->hidden(fn (Get $get): bool => filled(self::normalizeUploadPath($get('file_path'))))
+                            ),
                             Textarea::make('notes')
                                 ->label('Notas')
                                 ->rows(2)
-                                ->columnSpanFull(),
+                                ->hidden()
+                                ->dehydrated(),
                         ])
                         ->columnSpanFull(),
                 ]),
@@ -288,7 +333,7 @@ class EmployeeEditForm
 
     protected static function storagePath(string $suffix): string
     {
-        $livewire = \Livewire\Livewire::current();
+        $livewire = Livewire::current();
         $employeeId = method_exists($livewire, 'getRecord') ? $livewire->getRecord()?->getKey() : null;
 
         return 'employees/'.($employeeId ?? 'temp').'/'.$suffix;
@@ -302,12 +347,161 @@ class EmployeeEditForm
                 ->image()
                 ->panelLayout('compact')
                 ->panelAspectRatio('1:1')
-                ->imagePreviewHeight('160')
+                ->imagePreviewHeight('112')
                 ->imageEditor()
                 ->imageEditorViewportWidth(1280)
                 ->imageEditorViewportHeight(960)
                 ->imageEditorMode(1)
+                ->extraAttributes(['class' => 'employee-drive-upload employee-drive-upload--photo'])
         );
+    }
+
+    protected static function attachmentFileUpload(FileUpload $field): FileUpload
+    {
+        return self::publicFileUpload(
+            $field
+                ->hiddenLabel()
+                ->storeFileNamesIn('original_name')
+                ->previewable(false)
+                ->downloadable()
+                ->openable()
+                ->panelLayout('compact')
+                ->extraAttributes(['class' => 'employee-drive-upload'])
+        );
+    }
+
+    /**
+     * @return array<Action>
+     */
+    protected static function driveTileExtraActions(bool $canRename = true, string $actionName = 'manageDriveItem'): array
+    {
+        $deleteItem = function (array $arguments, Repeater $component): void {
+            $state = $component->getState();
+            unset($state[$arguments['item']]);
+            $component->state($state);
+        };
+
+        if (! $canRename) {
+            return [
+                Action::make($actionName)
+                    ->icon(Heroicon::PencilSquare)
+                    ->iconButton()
+                    ->color('gray')
+                    ->size(Size::Small)
+                    ->tooltip('Opciones')
+                    ->extraAttributes(['class' => 'employee-drive-tile__menu'])
+                    ->requiresConfirmation()
+                    ->modalIcon(Heroicon::Trash)
+                    ->modalIconColor('danger')
+                    ->modalHeading('Eliminar foto')
+                    ->modalDescription('¿Deseas eliminar esta fotografía?')
+                    ->modalSubmitActionLabel('Eliminar')
+                    ->action($deleteItem),
+            ];
+        }
+
+        return [
+            Action::make($actionName)
+                ->icon(Heroicon::PencilSquare)
+                ->iconButton()
+                ->color('gray')
+                ->size(Size::Small)
+                ->tooltip('Opciones')
+                ->extraAttributes(['class' => 'employee-drive-tile__menu'])
+                ->modalHeading('Editar archivo')
+                ->modalSubmitActionLabel('Guardar')
+                ->modalWidth(Width::Small)
+                ->fillForm(function (array $arguments, Repeater $component): array {
+                    $item = $component->getItemStateSnapshot($arguments['item']) ?? [];
+
+                    return [
+                        'title' => $item['title']
+                            ?? $item['original_name']
+                            ?? '',
+                    ];
+                })
+                ->schema([
+                    TextInput::make('title')
+                        ->label('Nombre')
+                        ->required()
+                        ->maxLength(255),
+                ])
+                ->action(function (array $data, array $arguments, Repeater $component): void {
+                    $state = $component->getState();
+                    $itemKey = $arguments['item'];
+
+                    if (! array_key_exists($itemKey, $state)) {
+                        return;
+                    }
+
+                    $state[$itemKey]['title'] = $data['title'];
+                    $component->state($state);
+                })
+                ->extraModalFooterActions([
+                    Action::make('delete'.$actionName)
+                        ->label('Eliminar')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Eliminar archivo')
+                        ->modalSubmitActionLabel('Eliminar')
+                        ->action($deleteItem),
+                ]),
+        ];
+    }
+
+    protected static function driveTileViewData(Get $get, ?Model $record, string $kind, string $pathKey): array
+    {
+        $path = self::normalizeUploadPath($get($pathKey));
+
+        if (blank($path)) {
+            $path = match (true) {
+                $kind === 'file' && $record instanceof EmployeeAttachment => $record->file_path,
+                $kind === 'photo' && $record instanceof EmployeePhoto => $record->path,
+                default => null,
+            };
+        }
+
+        $title = $get('title');
+        $originalName = $get('original_name');
+
+        if ($record instanceof EmployeeAttachment) {
+            $title = filled($title) ? $title : $record->title;
+            $originalName = filled($originalName) ? $originalName : $record->original_name;
+
+            if (blank($title)) {
+                $title = $record->displayName();
+            }
+        }
+
+        $uploadedAt = $get('created_at') ?? $record?->getAttribute('created_at');
+
+        return [
+            'kind' => $kind,
+            'layout' => 'full',
+            'path' => $path,
+            'title' => $title,
+            'originalName' => $originalName,
+            'uploadedAt' => $uploadedAt,
+        ];
+    }
+
+    protected static function normalizeUploadPath(mixed $state): ?string
+    {
+        if (blank($state)) {
+            return null;
+        }
+
+        if (is_string($state)) {
+            return $state;
+        }
+
+        if (is_array($state)) {
+            $first = reset($state);
+
+            return is_string($first) ? $first : null;
+        }
+
+        return null;
     }
 
     protected static function publicFileUpload(FileUpload $field): FileUpload
@@ -315,7 +509,7 @@ class EmployeeEditForm
         return $field
             ->disk('public')
             ->visibility('public')
-            ->getUploadedFileUsing(static function (BaseFileUpload $component, string $file, string | array | null $storedFileNames): ?array {
+            ->getUploadedFileUsing(static function (BaseFileUpload $component, string $file, string|array|null $storedFileNames): ?array {
                 $storage = Storage::disk('public');
 
                 if (blank($file) || ! $storage->exists($file)) {
@@ -327,8 +521,14 @@ class EmployeeEditForm
 
                     if (is_array($storedFileNames)) {
                         $name = $storedFileNames[$file] ?? $name;
-                    } elseif (is_string($storedFileNames) && filled($storedFileNames)) {
+                    }
+
+                    if (is_string($storedFileNames) && filled($storedFileNames)) {
                         $name = $storedFileNames;
+                    }
+
+                    if (preg_match('/^[a-f0-9\-]{20,}\./i', $name) || strlen($name) > 48) {
+                        $name = 'Archivo';
                     }
 
                     return [
