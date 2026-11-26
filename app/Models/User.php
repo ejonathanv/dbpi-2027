@@ -9,6 +9,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -44,6 +45,39 @@ class User extends Authenticatable implements FilamentUser
     public function moduleMemberships(): HasMany
     {
         return $this->hasMany(ModuleMembership::class);
+    }
+
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class)->withTimestamps();
+    }
+
+    public function hasUnrestrictedRhCompanyAccess(): bool
+    {
+        return $this->isAdministrator();
+    }
+
+    public function canAccessCompany(Company $company): bool
+    {
+        if ($this->hasUnrestrictedRhCompanyAccess()) {
+            return true;
+        }
+
+        if ($this->user_type !== UserType::Usuario) {
+            return false;
+        }
+
+        if (! $this->hasModulePermission(AppModule::Rh, ModulePermissionLevel::View)) {
+            return false;
+        }
+
+        return $this->companies()->whereKey($company->getKey())->exists();
+    }
+
+    /** @param  array<int|string>  $companyIds */
+    public function syncCompanyAccess(array $companyIds): void
+    {
+        $this->companies()->sync($companyIds);
     }
 
     public function canAccessPanel(Panel $panel): bool

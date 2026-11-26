@@ -7,7 +7,9 @@ use App\Filament\Resources\Companies\Pages\EditCompany;
 use App\Filament\Resources\Companies\Pages\ListCompanies;
 use App\Filament\Resources\Companies\Schemas\CompanyForm;
 use App\Filament\Resources\Companies\Tables\CompaniesTable;
+use App\Enums\UserType;
 use App\Models\Company;
+use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -59,9 +61,22 @@ class CompanyResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user instanceof User && $user->user_type === UserType::Usuario && ! $user->hasUnrestrictedRhCompanyAccess()) {
+            $query->whereHas('users', fn (Builder $relation): Builder => $relation->whereKey($user->getKey()));
+        }
+
+        return $query;
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-        return parent::getRecordRouteBindingEloquentQuery()
+        return static::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

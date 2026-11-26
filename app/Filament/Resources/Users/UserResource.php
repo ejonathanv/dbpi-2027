@@ -42,7 +42,7 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('moduleMemberships');
+        return parent::getEloquentQuery()->with(['moduleMemberships', 'companies']);
     }
 
     public static function getRelations(): array

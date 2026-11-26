@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Users\Schemas;
 use App\Enums\AppModule;
 use App\Enums\ModulePermissionLevel;
 use App\Enums\UserType;
+use App\Models\Company;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -23,6 +25,7 @@ class UserForm
                 ->options(ModulePermissionLevel::class)
                 ->placeholder('Sin acceso')
                 ->native(false)
+                ->live()
                 ->disabled(fn (Get $get): bool => ! self::isUsuarioType($get)))
             ->all();
 
@@ -81,6 +84,21 @@ class UserForm
                             ->content('Cambia el tipo a «Usuario» para asignar permisos granulares por módulo.')
                             ->columnSpanFull(),
                     ]),
+                Section::make('Empresas — Recursos Humanos')
+                    ->columnSpanFull()
+                    ->visible(fn (Get $get): bool => self::isUsuarioType($get) && self::hasRhModulePermission($get))
+                    ->description('El usuario solo podrá ver y operar sobre las empresas seleccionadas dentro del módulo RH.')
+                    ->schema([
+                        CheckboxList::make('company_ids')
+                            ->label('Empresas con acceso')
+                            ->options(fn (): array => Company::query()
+                                ->orderBy('legal_name')
+                                ->pluck('legal_name', 'id')
+                                ->all())
+                            ->columns(2)
+                            ->bulkToggleable()
+                            ->searchable(),
+                    ]),
                 Section::make('Contacto externo')
                     ->columnSpanFull()
                     ->visible(fn (Get $get): bool => self::isContactoType($get))
@@ -128,5 +146,10 @@ class UserForm
         $type = self::resolveUserTypeState($get('user_type'));
 
         return $type === UserType::Contacto;
+    }
+
+    public static function hasRhModulePermission(Get $get): bool
+    {
+        return filled($get('module_permissions.'.AppModule::Rh->value));
     }
 }

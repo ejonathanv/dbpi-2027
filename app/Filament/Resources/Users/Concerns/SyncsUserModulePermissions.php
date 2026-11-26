@@ -10,6 +10,9 @@ trait SyncsUserModulePermissions
     /** @var array<string, string|null> */
     protected array $modulePermissions = [];
 
+    /** @var array<int|string> */
+    protected array $companyIds = [];
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data['user_type'] = $this->record->user_type?->value;
@@ -21,13 +24,16 @@ trait SyncsUserModulePermissions
             $data['module_permissions'][$module->value] = $level?->value;
         }
 
+        $data['company_ids'] = $this->record->companies()->pluck('companies.id')->all();
+
         return $data;
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $this->modulePermissions = $this->normalizeModulePermissions($data['module_permissions'] ?? []);
-        unset($data['module_permissions']);
+        $this->companyIds = $data['company_ids'] ?? [];
+        unset($data['module_permissions'], $data['company_ids']);
 
         return $data;
     }
@@ -35,7 +41,8 @@ trait SyncsUserModulePermissions
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->modulePermissions = $this->normalizeModulePermissions($data['module_permissions'] ?? []);
-        unset($data['module_permissions']);
+        $this->companyIds = $data['company_ids'] ?? [];
+        unset($data['module_permissions'], $data['company_ids']);
 
         return $data;
     }
@@ -64,11 +71,13 @@ trait SyncsUserModulePermissions
     protected function afterCreate(): void
     {
         $this->syncPermissionsOnRecord();
+        $this->syncCompanyAccessOnRecord();
     }
 
     protected function afterSave(): void
     {
         $this->syncPermissionsOnRecord();
+        $this->syncCompanyAccessOnRecord();
     }
 
     protected function syncPermissionsOnRecord(): void
@@ -78,5 +87,24 @@ trait SyncsUserModulePermissions
         } else {
             $this->record->moduleMemberships()->delete();
         }
+    }
+
+    protected function syncCompanyAccessOnRecord(): void
+    {
+        if ($this->record->user_type !== UserType::Usuario) {
+            $this->record->companies()->detach();
+
+            return;
+        }
+
+        $rhLevel = $this->modulePermissions[AppModule::Rh->value] ?? null;
+
+        if (blank($rhLevel)) {
+            $this->record->companies()->detach();
+
+            return;
+        }
+
+        $this->record->syncCompanyAccess($this->companyIds);
     }
 }
