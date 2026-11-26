@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CrmOpportunities;
 
+use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CrmOpportunities\Pages\CreateCrmOpportunity;
 use App\Filament\Resources\CrmOpportunities\Pages\EditCrmOpportunity;
 use App\Filament\Resources\CrmOpportunities\Pages\ListCrmOpportunities;
@@ -21,7 +22,7 @@ class CrmOpportunityResource extends Resource
 {
     protected static ?string $model = CrmOpportunity::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'CRM';
+    protected static string|UnitEnum|null $navigationGroup = PanelNavigationGroup::Crm;
 
     protected static ?string $modelLabel = 'oportunidad';
 

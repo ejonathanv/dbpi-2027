@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CrmCalendarEvents;
 
+use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CrmCalendarEvents\Pages\CreateCrmCalendarEvent;
 use App\Filament\Resources\CrmCalendarEvents\Pages\EditCrmCalendarEvent;
 use App\Filament\Resources\CrmCalendarEvents\Pages\ListCrmCalendarEvents;
@@ -19,7 +20,7 @@ class CrmCalendarEventResource extends Resource
 {
     protected static ?string $model = CrmCalendarEvent::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'CRM';
+    protected static string|UnitEnum|null $navigationGroup = PanelNavigationGroup::Crm;
 
     protected static ?string $modelLabel = 'evento';
 

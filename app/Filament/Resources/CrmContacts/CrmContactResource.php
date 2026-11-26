@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CrmContacts;
 
+use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CrmContacts\Pages\CreateCrmContact;
 use App\Filament\Resources\CrmContacts\Pages\EditCrmContact;
 use App\Filament\Resources\CrmContacts\Pages\ListCrmContacts;
@@ -21,7 +22,7 @@ class CrmContactResource extends Resource
 {
     protected static ?string $model = CrmContact::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'CRM';
+    protected static string|UnitEnum|null $navigationGroup = PanelNavigationGroup::Crm;
 
     protected static ?string $modelLabel = 'contacto';
 

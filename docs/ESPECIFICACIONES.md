@@ -349,6 +349,18 @@ erDiagram
 | BD inicial | SQLite (desarrollo) | 2025-11-25 |
 | Documentos | Catálogo `document_types` + almacenamiento en disco Laravel | 2025-11-25 |
 | Polimorfismo documentos | Recomendado para reuso inter-módulos | 2025-11-25 (propuesta) |
+| Orden del menú lateral | Enum `PanelNavigationGroup` + `AdminPanelProvider::navigationGroups()`. Orden fijo: **Escritorio** → **Recursos Humanos** → **Comercial** → **CRM** → **Helpdesk** → **Sistema**. El escritorio usa la página `EscritorioDashboard` | 2026-11-26 |
+
+### 9.2 Menú lateral (orden obligatorio)
+
+1. **Escritorio** — panel principal (`EscritorioDashboard`)
+2. **Recursos Humanos** — RH (`AppModule::Rh` → `PanelNavigationGroup::RecursosHumanos`)
+3. **Comercial** — placeholder / futuro módulo
+4. **CRM**
+5. **Helpdesk** — placeholder / futuro módulo
+6. **Sistema** — usuarios y configuración transversal
+
+Nuevos resources y páginas del panel deben asignar `navigationGroup` con `App\Enums\PanelNavigationGroup`, no cadenas sueltas.
 
 ### 9.1 Decisiones abiertas
 
@@ -371,6 +383,7 @@ erDiagram
 | 2025-11-26 | §2 Usuarios y acceso: tipos Usuario, Administrador y Contacto; membresías por módulo; orden de desarrollo (core antes que RH). |
 | 2026-11-26 | RH fase 1 documentada como operativa (empresas, empleados, catálogos, expediente digital). Siguiente módulo: **CRM** (§6 ampliado). |
 | 2026-11-26 | CRM fase 1: cuentas (campos comerciales/fiscales), contactos, oportunidades y calendario en Filament. |
+| 2026-11-26 | Orden fijo del sidebar del panel documentado (§9.2) e implementado con `PanelNavigationGroup`. |
 
 ---
 

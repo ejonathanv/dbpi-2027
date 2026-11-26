@@ -21,8 +21,13 @@ enum AppModule: string implements HasLabel
         };
     }
 
-    public function navigationGroup(): string
+    public function navigationGroup(): PanelNavigationGroup
     {
-        return $this->getLabel();
+        return match ($this) {
+            self::Rh => PanelNavigationGroup::RecursosHumanos,
+            self::Comercial => PanelNavigationGroup::Comercial,
+            self::Helpdesk => PanelNavigationGroup::Helpdesk,
+            self::Crm => PanelNavigationGroup::Crm,
+        };
     }
 }

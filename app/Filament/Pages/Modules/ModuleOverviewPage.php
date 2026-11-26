@@ -6,12 +6,13 @@ use App\Enums\AppModule;
 use App\Models\User;
 use App\Support\ModuleAccess;
 use Filament\Pages\Page;
+use UnitEnum;
 
 abstract class ModuleOverviewPage extends Page
 {
     protected string $view = 'filament.pages.module-overview';
 
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): string|UnitEnum|null
     {
         return static::module()->navigationGroup();
     }

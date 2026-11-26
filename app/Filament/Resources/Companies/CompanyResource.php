@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Companies;
 
+use App\Enums\PanelNavigationGroup;
 use App\Enums\UserType;
 use App\Filament\Resources\Companies\Pages\CreateCompany;
 use App\Filament\Resources\Companies\Pages\EditCompany;
@@ -26,7 +27,7 @@ class CompanyResource extends Resource
 {
     protected static ?string $model = Company::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Recursos Humanos';
+    protected static string|UnitEnum|null $navigationGroup = PanelNavigationGroup::RecursosHumanos;
 
     protected static ?string $modelLabel = 'empresa';
 

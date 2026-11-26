@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CrmAccounts;
 
+use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CrmAccounts\Pages\CreateCrmAccount;
 use App\Filament\Resources\CrmAccounts\Pages\EditCrmAccount;
 use App\Filament\Resources\CrmAccounts\Pages\ListCrmAccounts;
@@ -22,7 +23,7 @@ class CrmAccountResource extends Resource
 {
     protected static ?string $model = CrmAccount::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'CRM';
+    protected static string|UnitEnum|null $navigationGroup = PanelNavigationGroup::Crm;
 
     protected static ?string $modelLabel = 'cuenta';
 
