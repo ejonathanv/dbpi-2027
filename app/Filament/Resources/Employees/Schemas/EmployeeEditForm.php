@@ -8,6 +8,7 @@ use App\Enums\MaritalStatus;
 use App\Enums\SalaryCurrency;
 use App\Models\CompanyBranch;
 use App\Models\CompanyDepartment;
+use App\Models\CompanyPosition;
 use App\Models\EmployeeAttachment;
 use App\Models\EmployeePhoto;
 use Filament\Actions\Action;
@@ -157,7 +158,34 @@ class EmployeeEditForm
                 ->columns(2)
                 ->schema([
                     TextInput::make('employee_number')->label('Número de empleado')->maxLength(50),
-                    TextInput::make('job_title')->label('Puesto')->maxLength(255),
+                    Select::make('company_position_id')
+                        ->label('Puesto')
+                        ->options(fn (Component $livewire): array => self::positionOptions($livewire))
+                        ->searchable()
+                        ->preload()
+                        ->native(false)
+                        ->createOptionModalHeading('Nuevo puesto')
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->label('Nombre del puesto')
+                                ->required()
+                                ->maxLength(255),
+                        ])
+                        ->createOptionUsing(function (array $data, Component $livewire): int {
+                            $companyId = $livewire->getRecord()?->company_id;
+
+                            if (! $companyId) {
+                                throw new \RuntimeException('No se pudo determinar la empresa del empleado.');
+                            }
+
+                            return CompanyPosition::query()->firstOrCreate(
+                                [
+                                    'company_id' => $companyId,
+                                    'name' => trim($data['name']),
+                                ],
+                                ['is_active' => true],
+                            )->getKey();
+                        }),
                     Select::make('company_branch_id')
                         ->label('Sucursal')
                         ->options(fn (Component $livewire): array => self::branchOptions($livewire))
@@ -324,6 +352,23 @@ class EmployeeEditForm
         }
 
         return CompanyDepartment::query()
+            ->where('company_id', $companyId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
+    /** @return array<int|string, string> */
+    protected static function positionOptions(Component $livewire): array
+    {
+        $companyId = $livewire->getRecord()?->company_id;
+
+        if (! $companyId) {
+            return [];
+        }
+
+        return CompanyPosition::query()
             ->where('company_id', $companyId)
             ->where('is_active', true)
             ->orderBy('name')

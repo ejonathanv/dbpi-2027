@@ -35,7 +35,7 @@ class Employee extends Model
         'status',
         'monthly_salary',
         'salary_currency',
-        'job_title',
+        'company_position_id',
         'company_branch_id',
         'company_department_id',
         'bank_name',
@@ -66,7 +66,7 @@ class Employee extends Model
         ];
     }
 
-    public static function suggestedEmployeeNumberForCompany(int | string $companyId): string
+    public static function suggestedEmployeeNumberForCompany(int|string $companyId): string
     {
         $max = 0;
 
@@ -98,6 +98,11 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(CompanyDepartment::class, 'company_department_id');
+    }
+
+    public function position(): BelongsTo
+    {
+        return $this->belongsTo(CompanyPosition::class, 'company_position_id');
     }
 
     public function photos(): HasMany

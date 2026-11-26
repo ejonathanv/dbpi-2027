@@ -2,14 +2,15 @@
 
 namespace App\Filament\Resources\Companies;
 
-use App\Filament\Resources\Companies\RelationManagers\BranchesRelationManager;
-use App\Filament\Resources\Companies\RelationManagers\DepartmentsRelationManager;
+use App\Enums\UserType;
 use App\Filament\Resources\Companies\Pages\CreateCompany;
 use App\Filament\Resources\Companies\Pages\EditCompany;
 use App\Filament\Resources\Companies\Pages\ListCompanies;
+use App\Filament\Resources\Companies\RelationManagers\BranchesRelationManager;
+use App\Filament\Resources\Companies\RelationManagers\DepartmentsRelationManager;
+use App\Filament\Resources\Companies\RelationManagers\PositionsRelationManager;
 use App\Filament\Resources\Companies\Schemas\CompanyForm;
 use App\Filament\Resources\Companies\Tables\CompaniesTable;
-use App\Enums\UserType;
 use App\Models\Company;
 use App\Models\User;
 use BackedEnum;
@@ -25,7 +26,7 @@ class CompanyResource extends Resource
 {
     protected static ?string $model = Company::class;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Recursos Humanos';
+    protected static string|UnitEnum|null $navigationGroup = 'Recursos Humanos';
 
     protected static ?string $modelLabel = 'empresa';
 
@@ -54,6 +55,7 @@ class CompanyResource extends Resource
         return [
             BranchesRelationManager::class,
             DepartmentsRelationManager::class,
+            PositionsRelationManager::class,
         ];
     }
 
