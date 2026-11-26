@@ -1,0 +1,29 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/* Sombra muy suave hacia la derecha (casi borde) */
+.fi-sidebar {
+    box-shadow: 1px 0 3px 0 rgb(0 0 0 / 0.06);
+}
+
+html.dark .fi-sidebar {
+    box-shadow: 1px 0 4px 0 rgb(0 0 0 / 0.35);
+}
+
+/* Sidebar con fondo blanco (modo claro) */
+html:not(.dark) .fi-sidebar,
+html:not(.dark) .fi-sidebar-header,
+html:not(.dark) .fi-sidebar-nav,
+html:not(.dark) .fi-sidebar-footer {
+    background-color: #ffffff;
+}
+
+/* Sidebar alineado con el header en modo oscuro */
+html.dark .fi-sidebar,
+html.dark .fi-sidebar-header,
+html.dark .fi-sidebar-nav,
+html.dark .fi-sidebar-footer {
+    background-color: #18181b;
+}
