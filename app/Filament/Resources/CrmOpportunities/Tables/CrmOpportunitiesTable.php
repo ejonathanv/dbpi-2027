@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CrmOpportunities\Tables;
 
+use App\Enums\CrmOpportunitySource;
 use App\Enums\CrmOpportunityStage;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -27,13 +28,24 @@ class CrmOpportunitiesTable
                     ->badge()
                     ->sortable(),
                 TextColumn::make('amount')
-                    ->label('Monto')
+                    ->label('Cantidad')
                     ->money(fn ($record): string => $record->currency ?? 'MXN')
                     ->sortable(),
+                TextColumn::make('probability_percent')
+                    ->label('Probabilidad')
+                    ->suffix('%')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('expected_close_date')
-                    ->label('Cierre est.')
+                    ->label('Fecha de cierre')
                     ->date()
                     ->sortable(),
+                TextColumn::make('source')
+                    ->label('Origen')
+                    ->toggleable(),
+                TextColumn::make('fob')
+                    ->label('FOB')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('assignee.name')
                     ->label('Responsable')
                     ->toggleable(),
@@ -44,6 +56,9 @@ class CrmOpportunitiesTable
                 SelectFilter::make('stage')
                     ->label('Etapa')
                     ->options(CrmOpportunityStage::class),
+                SelectFilter::make('source')
+                    ->label('Origen')
+                    ->options(CrmOpportunitySource::class),
             ]);
     }
 }
