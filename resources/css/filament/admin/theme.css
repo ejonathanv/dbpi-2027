@@ -1,5 +1,10 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 
+/* Empleado: fotos en miniatura (clic para ampliar en el editor) */
+.employee-photos-repeater .filepond--image-preview-wrapper {
+    cursor: zoom-in;
+}
+
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 

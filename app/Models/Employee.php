@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Enums\EmployeeGender;
 use App\Enums\EmployeeStatus;
 use App\Enums\MaritalStatus;
+use App\Enums\SalaryCurrency;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
@@ -31,6 +33,20 @@ class Employee extends Model
         'termination_date',
         'employee_number',
         'status',
+        'monthly_salary',
+        'salary_currency',
+        'job_title',
+        'company_branch_id',
+        'company_department_id',
+        'bank_name',
+        'bank_account_number',
+        'bank_card_number',
+        'bank_clabe',
+        'imss_daily_sbc',
+        'payroll_discounts_notes',
+        'vacation_days_per_year',
+        'vacation_days_used',
+        'vacation_notes',
     ];
 
     protected function casts(): array
@@ -42,6 +58,11 @@ class Employee extends Model
             'status' => EmployeeStatus::class,
             'gender' => EmployeeGender::class,
             'marital_status' => MaritalStatus::class,
+            'salary_currency' => SalaryCurrency::class,
+            'monthly_salary' => 'decimal:2',
+            'imss_daily_sbc' => 'decimal:2',
+            'vacation_days_per_year' => 'integer',
+            'vacation_days_used' => 'integer',
         ];
     }
 
@@ -69,6 +90,26 @@ class Employee extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(CompanyBranch::class, 'company_branch_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(CompanyDepartment::class, 'company_department_id');
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(EmployeePhoto::class)->orderBy('sort_order');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(EmployeeAttachment::class)->latest();
+    }
+
     public function fullName(): string
     {
         return trim(implode(' ', array_filter([
@@ -76,5 +117,14 @@ class Employee extends Model
             $this->last_name,
             $this->second_last_name,
         ])));
+    }
+
+    public function vacationDaysRemaining(): ?int
+    {
+        if ($this->vacation_days_per_year === null) {
+            return null;
+        }
+
+        return max(0, $this->vacation_days_per_year - ($this->vacation_days_used ?? 0));
     }
 }

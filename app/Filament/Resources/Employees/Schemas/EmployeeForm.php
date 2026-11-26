@@ -72,9 +72,10 @@ class EmployeeForm
                             ->rows(3)
                             ->columnSpanFull(),
                     ]),
-                Section::make('Datos laborales')
+                Section::make('Datos laborales (básicos)')
                     ->columnSpanFull()
                     ->columns(2)
+                    ->description('Al guardar podrás completar salario, puesto, banco y demás datos en la edición.')
                     ->schema([
                         TextInput::make('employee_number')
                             ->label('Número de empleado')
@@ -88,9 +89,6 @@ class EmployeeForm
                             ->native(false),
                         DatePicker::make('hire_date')
                             ->label('Fecha de ingreso')
-                            ->native(false),
-                        DatePicker::make('termination_date')
-                            ->label('Fecha de baja')
                             ->native(false),
                     ]),
             ]);

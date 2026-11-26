@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Companies;
 
+use App\Filament\Resources\Companies\RelationManagers\BranchesRelationManager;
+use App\Filament\Resources\Companies\RelationManagers\DepartmentsRelationManager;
 use App\Filament\Resources\Companies\Pages\CreateCompany;
 use App\Filament\Resources\Companies\Pages\EditCompany;
 use App\Filament\Resources\Companies\Pages\ListCompanies;
@@ -49,7 +51,10 @@ class CompanyResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            BranchesRelationManager::class,
+            DepartmentsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
