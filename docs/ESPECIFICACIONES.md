@@ -20,7 +20,7 @@ Aplicación modular para operación interna de negocio. Los módulos comparten d
 | Recursos Humanos | `rh` | **Fase 1 operativa (en pausa)** | Alta |
 | Comercial | `comercial` | Pendiente | — |
 | Helpdesk | `helpdesk` | Pendiente | — |
-| CRM | `crm` | **Siguiente en desarrollo** | Alta |
+| CRM | `crm` | **En desarrollo (fase 1)** | Alta |
 
 ### 1.2 Principios transversales
 
@@ -242,41 +242,68 @@ Sustituido en fase 1 práctica por adjuntos con título libre; conviene alinear 
 
 ## 6. Módulo: CRM (`crm`)
 
-> **Estado (2026-11-26):** siguiente foco de desarrollo. En el panel existe página de módulo (`CrmModuleOverview`); sin entidades ni resources aún.
+> **Estado (2026-11-26):** fase 1 en construcción. Grupo **CRM** en el panel: Cuentas, Contactos, Oportunidades, Calendario.
 
 ### 6.1 Objetivo
 
-Gestionar **cuentas** (clientes / prospectos), **contactos**, oportunidades y actividades comerciales, como base para Comercial y Helpdesk.
+Gestionar **cuentas** (clientes y socios), **contactos**, **oportunidades** y **calendario** de seguimiento comercial.
 
-### 6.2 Alcance fase 1 propuesto (CRM)
+### 6.2 Catálogo de cuentas (`crm_accounts`)
 
-| Entidad (borrador) | Descripción |
-|--------------------|-------------|
-| **Cuenta** (`crm_accounts` o similar) | Cliente o prospecto: razón social, nombre comercial, RFC opcional, estatus, asignado a usuario interno |
-| **Contacto** (`crm_contacts`) | Personas ligadas a una cuenta; email, teléfono; flags para usuario portal futuro |
-| **Actividad** (`crm_activities`) | Llamadas, reuniones, notas con fecha y responsable (mínimo viable) |
+| Campo | Notas |
+|-------|--------|
+| Logo | `logo_path`, disco `public` |
+| Nombre | Obligatorio |
+| Descripción general | Texto libre |
+| Razón social | |
+| E-mail principal, teléfono | |
+| Dirección de facturación / entrega | |
+| E-mail de facturación | |
+| IVA | Campo `vat_treatment` (texto; catálogo SAT refinable) |
+| Método de pago, forma de pago, uso de CFDI | Texto con ayuda SAT |
+| % descuento institucional | |
+| Información de cuentas por pagar | |
+| Tipo | Enum: Cliente, Socio, Inversor, Revendedor, Proveedor, Prospecto, Otro |
+| Código SIC, industria | |
 
-**Opcional en fase 1** (según prioridad): pipeline de **oportunidades** (`crm_opportunities`) con etapas simples.
+**Condiciones de pago y entrega**
 
-### 6.3 Reglas y decisiones CRM (a cerrar al iniciar)
+| Campo | Notas |
+|-------|--------|
+| ¿Entregas parciales? | Boolean |
+| Días de entrega | |
+| Horarios de entrega | |
+| % anticipo y días | |
+| % al entregar y días | |
+| % instalación y días | |
 
-1. **Empresa RH vs cuenta CRM:** hoy `companies` es catálogo **empleador** en RH. Las cuentas CRM serán modelo **separado** salvo decisión explícita en §9.1 (evitar mezclar empleador con cliente).
-2. **Permisos:** reutilizar `module_memberships` con `AppModule::Crm` (`view` / `edit` / `delete`).
-3. **Usuario tipo `contacto`:** definir en fase 1 solo el modelo de contacto; enlace `contact` ↔ `user` cuando exista portal o tickets (§2.5).
-4. **Idioma y UI:** grupo de navegación **CRM**; resources Filament en español.
+### 6.3 Otras entidades fase 1
 
-### 6.4 Fuera de alcance fase 1 CRM
+| Entidad | Tabla | Panel |
+|---------|-------|--------|
+| Contactos | `crm_contacts` | Catálogo global + relation manager en cuenta |
+| Oportunidades | `crm_opportunities` | Etapas, monto, cuenta, contacto, responsable |
+| Calendario | `crm_calendar_events` | Vista mensual + listado; vínculo opcional a cuenta, contacto u oportunidad |
 
-- Campañas de marketing, email masivo, integración telefonía.
-- Portal completo del contacto y tickets (Helpdesk).
-- Sincronización automática con Comercial.
+### 6.4 Reglas y decisiones
 
-### 6.5 Criterios de aceptación fase 1 CRM
+1. **Empresa RH (`companies`) ≠ cuenta CRM (`crm_accounts`).**
+2. Permisos vía `module_memberships` + políticas `Crm*Policy`.
+3. Usuario tipo `contacto` sin enlace a `User` hasta portal / Helpdesk.
 
-- [ ] CRUD de cuentas y contactos con relación cuenta ↔ contactos
-- [ ] Registro de actividades por cuenta o contacto
-- [ ] Menú y políticas según membresía `crm`
-- [ ] Página resumen del módulo enlazada a resources reales (sustituir placeholder)
+### 6.5 Fuera de alcance inmediato CRM
+
+- Catálogos SAT cerrados (selects fijos) para método/forma/CFDI.
+- Campañas, telefonía, portal contacto, integración Comercial.
+
+### 6.6 Criterios de aceptación fase 1 CRM
+
+- [x] CRUD cuentas con campos acordados (pestañas General / Facturación / Condiciones)
+- [x] CRUD contactos por cuenta
+- [x] CRUD oportunidades
+- [x] Calendario (eventos + vista del mes)
+- [x] Menú y políticas según membresía `crm`
+- [ ] Refinar calendario (navegación entre meses, arrastrar eventos)
 
 ---
 
@@ -325,7 +352,8 @@ erDiagram
 
 ### 9.1 Decisiones abiertas
 
-- [ ] ¿Una sola tabla `companies` global o `rh_companies` separada de cuentas CRM?
+- [x] Cuentas CRM en `crm_accounts`, separadas de `companies` (empleador RH) — 2026-11-26
+- [ ] ¿RFC obligatorio en cuenta CRM?
 - [ ] ¿Membresías en tablas propias vs paquete (p. ej. Spatie Permission) vs Filament Shield?
 - [ ] Panel y guard para **contactos**: mismo `/admin` con menú vacío reducido vs panel `portal` separado.
 - [ ] Disco de producción para documentos (S3, local cifrado, etc.)
@@ -342,12 +370,12 @@ erDiagram
 | 2025-11-25 | Panel Filament en español vía `APP_LOCALE=es` (Laravel). |
 | 2025-11-26 | §2 Usuarios y acceso: tipos Usuario, Administrador y Contacto; membresías por módulo; orden de desarrollo (core antes que RH). |
 | 2026-11-26 | RH fase 1 documentada como operativa (empresas, empleados, catálogos, expediente digital). Siguiente módulo: **CRM** (§6 ampliado). |
+| 2026-11-26 | CRM fase 1: cuentas (campos comerciales/fiscales), contactos, oportunidades y calendario en Filament. |
 
 ---
 
 ## 11. Próximos pasos de desarrollo
 
-1. **CRM fase 1:** migraciones y modelos (cuenta, contacto, actividad); policies; Resources Filament; permisos `crm` en usuarios (ya soportado en formulario de usuario).
-2. Cerrar decisiones §9.1 aplicables al CRM (modelo de cuenta vs `companies` de RH).
-3. **RH (cuando retome):** historial de sueldo, `document_types` genérico, seeds, regla anti auto-eliminación admin.
-4. Helpdesk / Comercial: después de CRM mínimo y definición de contactos.
+1. **CRM:** catálogos SAT, calendario interactivo, asignación de cuentas por usuario.
+2. **RH (cuando retome):** historial de sueldo, `document_types` genérico, seeds.
+3. Helpdesk / Comercial tras CRM estable.
