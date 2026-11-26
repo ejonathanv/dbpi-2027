@@ -8,6 +8,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -37,9 +38,11 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::hex('#ba1818'),
             ])
-            ->navigationGroups([
-                PanelNavigationGroup::class,
-            ])
+            ->navigationGroups(collect(PanelNavigationGroup::sidebarGroups())
+                ->mapWithKeys(fn (PanelNavigationGroup $group): array => [
+                    $group->name => NavigationGroup::fromEnum($group),
+                ])
+                ->all())
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

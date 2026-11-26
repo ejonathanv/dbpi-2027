@@ -2,9 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\PanelNavigationGroup;
 use Filament\Pages\Dashboard as BaseDashboard;
-use UnitEnum;
 
 class EscritorioDashboard extends BaseDashboard
 {
@@ -12,7 +10,7 @@ class EscritorioDashboard extends BaseDashboard
 
     protected static ?string $title = 'Escritorio';
 
-    protected static string|UnitEnum|null $navigationGroup = PanelNavigationGroup::Escritorio;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = -2;
 }

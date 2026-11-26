@@ -20,4 +20,17 @@ enum PanelNavigationGroup: string implements HasLabel
     {
         return $this->value;
     }
+
+    /**
+     * Grupos del menú lateral con submenú (excluye Escritorio, acceso directo en la raíz).
+     *
+     * @return array<int, self>
+     */
+    public static function sidebarGroups(): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $group): bool => $group !== self::Escritorio,
+        ));
+    }
 }
