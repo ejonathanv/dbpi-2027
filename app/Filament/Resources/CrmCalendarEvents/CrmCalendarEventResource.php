@@ -9,11 +9,14 @@ use App\Filament\Resources\CrmCalendarEvents\Pages\ListCrmCalendarEvents;
 use App\Filament\Resources\CrmCalendarEvents\Schemas\CrmCalendarEventForm;
 use App\Filament\Resources\CrmCalendarEvents\Tables\CrmCalendarEventsTable;
 use App\Models\CrmCalendarEvent;
+use App\Models\User;
+use App\Support\CrmRecordAccess;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class CrmCalendarEventResource extends Resource
@@ -51,5 +54,18 @@ class CrmCalendarEventResource extends Resource
             'create' => CreateCrmCalendarEvent::route('/create'),
             'edit' => EditCrmCalendarEvent::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user instanceof User) {
+            CrmRecordAccess::scopeCalendarEventsQuery($query, $user);
+        }
+
+        return $query;
     }
 }

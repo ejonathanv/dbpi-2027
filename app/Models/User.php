@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AppModule;
+use App\Enums\CrmRecordScope;
 use App\Enums\ModulePermissionLevel;
 use App\Enums\UserType;
 use Database\Factories\UserFactory;
@@ -25,6 +26,7 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'user_type',
         'is_active',
+        'crm_record_scope',
     ];
 
     protected $hidden = [
@@ -39,7 +41,13 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'user_type' => UserType::class,
             'is_active' => 'boolean',
+            'crm_record_scope' => CrmRecordScope::class,
         ];
+    }
+
+    public function restrictsCrmToOwnRecords(): bool
+    {
+        return $this->crm_record_scope === CrmRecordScope::Own;
     }
 
     public function moduleMemberships(): HasMany

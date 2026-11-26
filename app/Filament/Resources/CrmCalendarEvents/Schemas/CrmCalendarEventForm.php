@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CrmCalendarEvents\Schemas;
 use App\Models\CrmAccount;
 use App\Models\CrmContact;
 use App\Models\CrmOpportunity;
+use App\Support\CrmRecordAccess;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -82,11 +83,13 @@ class CrmCalendarEventForm
                                     return [];
                                 }
 
-                                return CrmOpportunity::query()
+                                $query = CrmOpportunity::query()
                                     ->where('crm_account_id', $accountId)
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->all();
+                                    ->orderBy('name');
+
+                                CrmRecordAccess::scopeOpportunitiesQuery($query);
+
+                                return $query->pluck('name', 'id')->all();
                             })
                             ->searchable()
                             ->native(false)

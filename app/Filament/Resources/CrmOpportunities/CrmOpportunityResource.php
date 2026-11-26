@@ -9,6 +9,8 @@ use App\Filament\Resources\CrmOpportunities\Pages\ListCrmOpportunities;
 use App\Filament\Resources\CrmOpportunities\Schemas\CrmOpportunityForm;
 use App\Filament\Resources\CrmOpportunities\Tables\CrmOpportunitiesTable;
 use App\Models\CrmOpportunity;
+use App\Models\User;
+use App\Support\CrmRecordAccess;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -55,11 +57,32 @@ class CrmOpportunityResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user instanceof User) {
+            CrmRecordAccess::scopeOpportunitiesQuery($query, $user);
+        }
+
+        return $query;
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-        return parent::getRecordRouteBindingEloquentQuery()
+        $query = parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        $user = auth()->user();
+
+        if ($user instanceof User) {
+            CrmRecordAccess::scopeOpportunitiesQuery($query, $user);
+        }
+
+        return $query;
     }
 }

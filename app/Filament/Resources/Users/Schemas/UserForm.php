@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\AppModule;
+use App\Enums\CrmRecordScope;
 use App\Enums\ModulePermissionLevel;
 use App\Enums\UserType;
 use App\Models\Company;
@@ -84,6 +85,18 @@ class UserForm
                             ->content('Cambia el tipo a «Usuario» para asignar permisos granulares por módulo.')
                             ->columnSpanFull(),
                     ]),
+                Section::make('CRM — alcance de datos')
+                    ->columnSpanFull()
+                    ->visible(fn (Get $get): bool => self::isUsuarioType($get) && self::hasCrmModulePermission($get))
+                    ->description('Limita qué oportunidades y eventos del calendario puede ver este usuario dentro del módulo CRM.')
+                    ->schema([
+                        Select::make('crm_record_scope')
+                            ->label('Oportunidades y eventos')
+                            ->options(CrmRecordScope::class)
+                            ->default(CrmRecordScope::All)
+                            ->required()
+                            ->native(false),
+                    ]),
                 Section::make('Empresas — Recursos Humanos')
                     ->columnSpanFull()
                     ->visible(fn (Get $get): bool => self::isUsuarioType($get) && self::hasRhModulePermission($get))
@@ -151,5 +164,10 @@ class UserForm
     public static function hasRhModulePermission(Get $get): bool
     {
         return filled($get('module_permissions.'.AppModule::Rh->value));
+    }
+
+    public static function hasCrmModulePermission(Get $get): bool
+    {
+        return filled($get('module_permissions.'.AppModule::Crm->value));
     }
 }

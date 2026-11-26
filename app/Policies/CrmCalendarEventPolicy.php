@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\AppModule;
 use App\Models\CrmCalendarEvent;
 use App\Models\User;
+use App\Support\CrmRecordAccess;
 use App\Support\ModuleAccess;
 
 class CrmCalendarEventPolicy
@@ -16,7 +17,8 @@ class CrmCalendarEventPolicy
 
     public function view(User $user, CrmCalendarEvent $crmCalendarEvent): bool
     {
-        return ModuleAccess::canViewModule($user, AppModule::Crm);
+        return ModuleAccess::canViewModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessCalendarEvent($crmCalendarEvent, $user);
     }
 
     public function create(User $user): bool
@@ -26,11 +28,13 @@ class CrmCalendarEventPolicy
 
     public function update(User $user, CrmCalendarEvent $crmCalendarEvent): bool
     {
-        return ModuleAccess::canEditModule($user, AppModule::Crm);
+        return ModuleAccess::canEditModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessCalendarEvent($crmCalendarEvent, $user);
     }
 
     public function delete(User $user, CrmCalendarEvent $crmCalendarEvent): bool
     {
-        return ModuleAccess::canDeleteInModule($user, AppModule::Crm);
+        return ModuleAccess::canDeleteInModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessCalendarEvent($crmCalendarEvent, $user);
     }
 }

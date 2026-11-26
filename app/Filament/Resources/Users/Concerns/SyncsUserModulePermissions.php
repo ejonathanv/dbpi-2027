@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Concerns;
 
 use App\Enums\AppModule;
+use App\Enums\CrmRecordScope;
 use App\Enums\UserType;
 
 trait SyncsUserModulePermissions
@@ -35,7 +36,7 @@ trait SyncsUserModulePermissions
         $this->companyIds = $data['company_ids'] ?? [];
         unset($data['module_permissions'], $data['company_ids']);
 
-        return $data;
+        return $this->normalizeCrmRecordScope($data);
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -43,6 +44,22 @@ trait SyncsUserModulePermissions
         $this->modulePermissions = $this->normalizeModulePermissions($data['module_permissions'] ?? []);
         $this->companyIds = $data['company_ids'] ?? [];
         unset($data['module_permissions'], $data['company_ids']);
+
+        return $this->normalizeCrmRecordScope($data);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeCrmRecordScope(array $data): array
+    {
+        $permissions = $this->modulePermissions ?? [];
+        $crmLevel = $permissions[AppModule::Crm->value] ?? null;
+
+        if (blank($crmLevel)) {
+            $data['crm_record_scope'] = CrmRecordScope::All->value;
+        }
 
         return $data;
     }

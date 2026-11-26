@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\AppModule;
 use App\Models\CrmOpportunity;
 use App\Models\User;
+use App\Support\CrmRecordAccess;
 use App\Support\ModuleAccess;
 
 class CrmOpportunityPolicy
@@ -16,7 +17,8 @@ class CrmOpportunityPolicy
 
     public function view(User $user, CrmOpportunity $crmOpportunity): bool
     {
-        return ModuleAccess::canViewModule($user, AppModule::Crm);
+        return ModuleAccess::canViewModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessOpportunity($crmOpportunity, $user);
     }
 
     public function create(User $user): bool
@@ -26,21 +28,25 @@ class CrmOpportunityPolicy
 
     public function update(User $user, CrmOpportunity $crmOpportunity): bool
     {
-        return ModuleAccess::canEditModule($user, AppModule::Crm);
+        return ModuleAccess::canEditModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessOpportunity($crmOpportunity, $user);
     }
 
     public function delete(User $user, CrmOpportunity $crmOpportunity): bool
     {
-        return ModuleAccess::canDeleteInModule($user, AppModule::Crm);
+        return ModuleAccess::canDeleteInModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessOpportunity($crmOpportunity, $user);
     }
 
     public function restore(User $user, CrmOpportunity $crmOpportunity): bool
     {
-        return ModuleAccess::canEditModule($user, AppModule::Crm);
+        return ModuleAccess::canEditModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessOpportunity($crmOpportunity, $user);
     }
 
     public function forceDelete(User $user, CrmOpportunity $crmOpportunity): bool
     {
-        return ModuleAccess::canDeleteInModule($user, AppModule::Crm);
+        return ModuleAccess::canDeleteInModule($user, AppModule::Crm)
+            && CrmRecordAccess::userCanAccessOpportunity($crmOpportunity, $user);
     }
 }
