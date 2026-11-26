@@ -2,7 +2,8 @@
 
 namespace App\Filament\Resources\CrmAccounts\RelationManagers;
 
-use Filament\Actions\CreateAction;
+use App\Filament\Resources\CrmContacts\CrmContactResource;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
@@ -52,7 +53,11 @@ class ContactsRelationManager extends RelationManager
                 IconColumn::make('is_primary')->label('Principal')->boolean(),
             ])
             ->headerActions([
-                CreateAction::make(),
+                Action::make('create')
+                    ->label('Crear contacto')
+                    ->url(fn (): string => CrmContactResource::getUrl('create').'?'.http_build_query([
+                        'crm_account_id' => $this->getOwnerRecord()->getKey(),
+                    ])),
             ])
             ->recordActions([
                 EditAction::make(),

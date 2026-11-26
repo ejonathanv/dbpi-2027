@@ -6,7 +6,6 @@ use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CrmAccounts\Pages\CreateCrmAccount;
 use App\Filament\Resources\CrmAccounts\Pages\EditCrmAccount;
 use App\Filament\Resources\CrmAccounts\Pages\ListCrmAccounts;
-use App\Filament\Resources\CrmAccounts\RelationManagers\ContactsRelationManager;
 use App\Filament\Resources\CrmAccounts\Schemas\CrmAccountForm;
 use App\Filament\Resources\CrmAccounts\Tables\CrmAccountsTable;
 use App\Models\CrmAccount;
@@ -49,9 +48,7 @@ class CrmAccountResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            ContactsRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array

@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\CrmAccounts\Schemas;
 
 use App\Enums\CrmAccountType;
+use App\Filament\Resources\CrmAccounts\Pages\EditCrmAccount;
+use App\Filament\Resources\CrmAccounts\RelationManagers\ContactsRelationManager;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -28,6 +31,14 @@ class CrmAccountForm
                             ->schema(self::billingTab()),
                         Tab::make('Condiciones de pago y entrega')
                             ->schema(self::paymentTermsTab()),
+                        Tab::make('Contactos')
+                            ->visible(fn (string $operation): bool => $operation === 'edit')
+                            ->schema([
+                                Livewire::make(ContactsRelationManager::class, fn (Livewire $component): array => [
+                                    'ownerRecord' => $component->getRecord(),
+                                    'pageClass' => EditCrmAccount::class,
+                                ])->lazyLoaded(),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ]);
