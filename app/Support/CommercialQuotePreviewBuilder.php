@@ -6,7 +6,6 @@ use App\Enums\CommercialQuoteLineItemType;
 use App\Enums\SalaryCurrency;
 use App\Models\CommercialQuote;
 use App\Models\CommercialQuoteLineItem;
-use App\Models\Company;
 use App\Models\CrmAccount;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Storage;
@@ -96,20 +95,6 @@ class CommercialQuotePreviewBuilder
             $total = $subtotalAfterDiscount;
         }
 
-        $issuerAddress = (string) (
-            SystemSetting::get('commercial_quote_issuer_address')
-            ?? Company::query()->where('is_active', true)->value('address')
-            ?? ''
-        );
-
-        $addressLines = array_values(array_filter(
-            array_map('trim', preg_split('/\r\n|\r|\n/', $issuerAddress) ?: [])
-        ));
-
-        if ($addressLines === []) {
-            $addressLines = ['Dynamic Communications'];
-        }
-
         $contact = $quote->contact;
         $account = $quote->account;
         $customerLogoUrl = self::customerLogoUrl($account);
@@ -120,7 +105,8 @@ class CommercialQuotePreviewBuilder
             : sprintf('TODOS LOS PRECIOS EN MXN Y VÁLIDOS POR %d DÍAS', $validityDays);
 
         return [
-            'issuer_address_lines' => $addressLines,
+            'issuer_logo_url' => self::issuerLogoUrl(),
+            'issuer_address_lines' => self::issuerAddressLines(),
             'customer_company' => (string) ($account?->name ?? '—'),
             'customer_logo_url' => $customerLogoUrl,
             'contact_name' => $contact?->fullName() ?: '—',
@@ -279,6 +265,23 @@ class CommercialQuotePreviewBuilder
         }
 
         return number_format($qty, 2, '.', ',');
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected static function issuerAddressLines(): array
+    {
+        return [
+            'CALLE LAZARO CARDENAS 341-C',
+            'COL. JARDINES DEL LAGO',
+            'MEXICALI, BC.',
+        ];
+    }
+
+    protected static function issuerLogoUrl(): string
+    {
+        return asset('img/svg/logo-dynacom.svg');
     }
 
     protected static function customerLogoUrl(?CrmAccount $account): ?string
