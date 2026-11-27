@@ -3,12 +3,18 @@
 namespace App\Filament\Resources\CommercialQuotes\RelationManagers;
 
 use App\Enums\CommercialQuoteLineItemType;
+use App\Enums\CommercialQuoteMarginOverrideType;
 use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteMarginTab;
 use App\Models\CommercialQuoteGroup;
 use App\Models\CommercialQuoteLineItem;
 use App\Support\CommercialQuoteLineItemPersistence;
+use App\Support\CommercialQuoteProductMarginCalculator;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -229,6 +235,124 @@ class CommercialQuoteMarginPanel extends RelationManager
                 CommercialQuoteLineItem::query()
                     ->findOrFail($arguments['lineItemId'])
                     ->delete();
+            });
+    }
+
+    public function overrideCustomerAmountAction(): Action
+    {
+        return $this->makeMarginOverrideAction(
+            name: 'overrideCustomerAmount',
+            heading: 'Importe al cliente',
+            label: 'importe',
+            type: CommercialQuoteMarginOverrideType::CustomerAmount,
+            isPercent: false,
+        );
+    }
+
+    public function overrideMarginPercentAction(): Action
+    {
+        return $this->makeMarginOverrideAction(
+            name: 'overrideMarginPercent',
+            heading: 'Margen porcentual',
+            label: 'porcentaje de margen',
+            type: CommercialQuoteMarginOverrideType::MarginPercent,
+            isPercent: true,
+        );
+    }
+
+    public function overrideMarginAmountAction(): Action
+    {
+        return $this->makeMarginOverrideAction(
+            name: 'overrideMarginAmount',
+            heading: 'Margen en pesos',
+            label: 'margen en pesos',
+            type: CommercialQuoteMarginOverrideType::MarginAmount,
+            isPercent: false,
+        );
+    }
+
+    protected function makeMarginOverrideAction(
+        string $name,
+        string $heading,
+        string $label,
+        CommercialQuoteMarginOverrideType $type,
+        bool $isPercent,
+    ): Action {
+        return Action::make($name)
+            ->modalHeading($heading)
+            ->modalSubmitActionLabel('Guardar')
+            ->fillForm(function (array $arguments) use ($type): array {
+                $item = CommercialQuoteLineItem::query()
+                    ->with('additionalCosts')
+                    ->findOrFail($arguments['lineItemId']);
+                $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
+
+                $defaultValue = match ($type) {
+                    CommercialQuoteMarginOverrideType::CustomerAmount => $margin['default_customer_amount'],
+                    CommercialQuoteMarginOverrideType::MarginPercent => $margin['default_margin_percent'],
+                    CommercialQuoteMarginOverrideType::MarginAmount => $margin['default_margin_amount'],
+                };
+
+                $manualValue = $item->manual_margin_override_type === $type
+                    ? (float) $item->manual_margin_override_value
+                    : $defaultValue;
+
+                return [
+                    'manual_value' => $manualValue,
+                    'use_default' => $item->manual_margin_override_type !== $type,
+                ];
+            })
+            ->form(function (array $arguments) use ($label, $type, $isPercent): array {
+                $item = CommercialQuoteLineItem::query()
+                    ->with('additionalCosts')
+                    ->findOrFail($arguments['lineItemId']);
+                $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
+
+                $defaultValue = match ($type) {
+                    CommercialQuoteMarginOverrideType::CustomerAmount => $margin['default_customer_amount'],
+                    CommercialQuoteMarginOverrideType::MarginPercent => $margin['default_margin_percent'],
+                    CommercialQuoteMarginOverrideType::MarginAmount => $margin['default_margin_amount'],
+                };
+
+                $formattedDefault = $isPercent
+                    ? number_format($defaultValue, 2).' %'
+                    : '$'.number_format($defaultValue, 2);
+
+                return [
+                    Placeholder::make('default_hint')
+                        ->label('')
+                        ->content("El {$label} por defecto es: {$formattedDefault}"),
+                    TextInput::make('manual_value')
+                        ->label($isPercent ? 'Porcentaje manual' : 'Importe manual')
+                        ->numeric()
+                        ->required()
+                        ->minValue(0)
+                        ->maxValue($isPercent ? 99.99 : null)
+                        ->suffix($isPercent ? '%' : null)
+                        ->prefix($isPercent ? null : '$')
+                        ->disabled(fn (Get $get): bool => (bool) $get('use_default')),
+                    Toggle::make('use_default')
+                        ->label('Usar valor calculado por defecto')
+                        ->live()
+                        ->default($item->manual_margin_override_type !== $type),
+                ];
+            })
+            ->action(function (array $arguments, array $data) use ($type): void {
+                $item = CommercialQuoteLineItem::query()->findOrFail($arguments['lineItemId']);
+
+                if ($data['use_default'] ?? false) {
+                    $item->update([
+                        'manual_margin_override_type' => null,
+                        'manual_margin_override_value' => null,
+                    ]);
+
+                    return;
+                }
+
+                $item->update([
+                    'manual_margin_override_type' => $type,
+                    'manual_margin_override_value' => $data['manual_value'],
+                ]);
             });
     }
 }

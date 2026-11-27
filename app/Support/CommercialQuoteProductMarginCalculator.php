@@ -2,31 +2,13 @@
 
 namespace App\Support;
 
+use App\Enums\CommercialQuoteMarginOverrideType;
 use App\Models\CommercialQuoteLineItem;
 
 class CommercialQuoteProductMarginCalculator
 {
     /**
-     * @return array{
-     *     reseller_price: float,
-     *     supplier_discount_percent: float,
-     *     supplier_special_discount_percent: float,
-     *     supplier_special_discount_amount: float,
-     *     net_supplier_unit: float,
-     *     additional_per_unit: float,
-     *     additional_total: float,
-     *     additional_breakdown: array<int, array{concept: string, amount: float}>,
-     *     extended_unit_price: float,
-     *     supplier_amount_net: float,
-     *     supplier_amount: float,
-     *     customer_cost: float,
-     *     customer_discount_percent: float,
-     *     customer_discount_amount: float,
-     *     customer_amount: float,
-     *     margin_percent: float,
-     *     margin_amount: float,
-     *     quantity: float,
-     * }
+     * @return array<string, mixed>
      */
     public static function forLineItem(CommercialQuoteLineItem $item): array
     {
@@ -61,17 +43,26 @@ class CommercialQuoteProductMarginCalculator
         $customerCost = $extendedUnitPrice;
         $customerDiscountAmount = $customerCost * ($customerDiscountPercent / 100);
         $customerUnitAfterDiscount = $customerCost - $customerDiscountAmount;
-        $customerAmount = $customerUnitAfterDiscount * $quantity;
+        $defaultCustomerAmount = $customerUnitAfterDiscount * $quantity;
 
-        $marginAmount = $customerAmount - $supplierAmount;
-        $marginPercent = $customerAmount > 0
-            ? ($marginAmount / $customerAmount) * 100
+        $defaultMarginAmount = $defaultCustomerAmount - $supplierAmount;
+        $defaultMarginPercent = $defaultCustomerAmount > 0
+            ? ($defaultMarginAmount / $defaultCustomerAmount) * 100
             : 0.0;
 
         if ($item->product_exclude_from_margin) {
-            $marginAmount = 0.0;
-            $marginPercent = 0.0;
+            $defaultMarginAmount = 0.0;
+            $defaultMarginPercent = 0.0;
         }
+
+        $effective = self::applyManualOverrides(
+            $item,
+            $supplierAmount,
+            $defaultCustomerAmount,
+            $defaultMarginAmount,
+            $defaultMarginPercent,
+            (bool) $item->product_exclude_from_margin,
+        );
 
         return [
             'reseller_price' => $resellerPrice,
@@ -88,10 +79,57 @@ class CommercialQuoteProductMarginCalculator
             'customer_cost' => $customerCost,
             'customer_discount_percent' => $customerDiscountPercent,
             'customer_discount_amount' => $customerDiscountAmount,
+            'default_customer_amount' => $defaultCustomerAmount,
+            'default_margin_percent' => $defaultMarginPercent,
+            'default_margin_amount' => $defaultMarginAmount,
+            'customer_amount' => $effective['customer_amount'],
+            'margin_percent' => $effective['margin_percent'],
+            'margin_amount' => $effective['margin_amount'],
+            'manual_override_type' => $item->manual_margin_override_type?->value,
+            'quantity' => $quantity,
+        ];
+    }
+
+    /**
+     * @return array{customer_amount: float, margin_percent: float, margin_amount: float}
+     */
+    protected static function applyManualOverrides(
+        CommercialQuoteLineItem $item,
+        float $supplierAmount,
+        float $defaultCustomerAmount,
+        float $defaultMarginAmount,
+        float $defaultMarginPercent,
+        bool $excludeFromMargin,
+    ): array {
+        $customerAmount = $defaultCustomerAmount;
+        $marginAmount = $defaultMarginAmount;
+        $marginPercent = $defaultMarginPercent;
+
+        $type = $item->manual_margin_override_type;
+        $value = (float) ($item->manual_margin_override_value ?? 0);
+
+        if ($type === CommercialQuoteMarginOverrideType::CustomerAmount && ! $excludeFromMargin) {
+            $customerAmount = max($value, 0);
+            $marginAmount = $customerAmount - $supplierAmount;
+            $marginPercent = $customerAmount > 0
+                ? ($marginAmount / $customerAmount) * 100
+                : 0.0;
+        } elseif ($type === CommercialQuoteMarginOverrideType::MarginPercent && ! $excludeFromMargin) {
+            $marginPercent = max(min($value, 99.99), 0);
+            $customerAmount = $supplierAmount / (1 - ($marginPercent / 100));
+            $marginAmount = $customerAmount - $supplierAmount;
+        } elseif ($type === CommercialQuoteMarginOverrideType::MarginAmount && ! $excludeFromMargin) {
+            $marginAmount = $value;
+            $customerAmount = $supplierAmount + $marginAmount;
+            $marginPercent = $customerAmount > 0
+                ? ($marginAmount / $customerAmount) * 100
+                : 0.0;
+        }
+
+        return [
             'customer_amount' => $customerAmount,
             'margin_percent' => $marginPercent,
             'margin_amount' => $marginAmount,
-            'quantity' => $quantity,
         ];
     }
 }

@@ -57,9 +57,33 @@
                 <td class="px-1 py-0.5 text-end">{{ $money($margin['customer_cost']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $percent($margin['customer_discount_percent']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $money($margin['customer_discount_amount']) }}</td>
-                <td class="px-1 py-0.5 text-end font-medium">{{ $money($margin['customer_amount']) }}</td>
-                <td class="px-1 py-0.5 text-end">{{ $percent($margin['margin_percent']) }}</td>
-                <td class="px-1 py-0.5 text-end font-semibold text-primary-600 dark:text-primary-400">{{ $money($margin['margin_amount']) }}</td>
+                <td class="px-1 py-0.5 align-top">
+                    @include('filament.resources.commercial-quotes.partials.margin-clickable-value', [
+                        'action' => 'overrideCustomerAmount',
+                        'lineItemId' => $item->id,
+                        'default' => $margin['default_customer_amount'],
+                        'effective' => $margin['customer_amount'],
+                        'format' => 'money',
+                    ])
+                </td>
+                <td class="px-1 py-0.5 align-top">
+                    @include('filament.resources.commercial-quotes.partials.margin-clickable-value', [
+                        'action' => 'overrideMarginPercent',
+                        'lineItemId' => $item->id,
+                        'default' => $margin['default_margin_percent'],
+                        'effective' => $margin['margin_percent'],
+                        'format' => 'percent',
+                    ])
+                </td>
+                <td class="px-1 py-0.5 align-top">
+                    @include('filament.resources.commercial-quotes.partials.margin-clickable-value', [
+                        'action' => 'overrideMarginAmount',
+                        'lineItemId' => $item->id,
+                        'default' => $margin['default_margin_amount'],
+                        'effective' => $margin['margin_amount'],
+                        'format' => 'money',
+                    ])
+                </td>
             </tr>
         </tbody>
     </table>

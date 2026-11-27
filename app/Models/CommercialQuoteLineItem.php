@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CommercialQuoteLineItemType;
+use App\Enums\CommercialQuoteMarginOverrideType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,6 +26,8 @@ class CommercialQuoteLineItem extends Model
         'supplier_discount_percent',
         'supplier_special_discount_percent',
         'customer_discount_percent',
+        'manual_margin_override_type',
+        'manual_margin_override_value',
         'commercial_personnel_id',
         'personnel_quantity',
         'personnel_days',
@@ -45,6 +48,8 @@ class CommercialQuoteLineItem extends Model
             'supplier_discount_percent' => 'decimal:2',
             'supplier_special_discount_percent' => 'decimal:2',
             'customer_discount_percent' => 'decimal:2',
+            'manual_margin_override_type' => CommercialQuoteMarginOverrideType::class,
+            'manual_margin_override_value' => 'decimal:2',
             'personnel_quantity' => 'decimal:4',
             'personnel_days' => 'integer',
         ];
