@@ -33,11 +33,6 @@ class CommercialQuoteForm
                             ->schema(self::generalTab()),
                         Tab::make('Margen')
                             ->schema(fn (string $operation): array => CommercialQuoteMarginTab::tabSchema($operation)),
-                        Tab::make('Categorías')
-                            ->schema([
-                                Placeholder::make('categories_pending')
-                                    ->content('Esta sección se configurará en una siguiente fase.'),
-                            ]),
                         Tab::make('Resumen')
                             ->schema([
                                 Placeholder::make('summary_pending')
