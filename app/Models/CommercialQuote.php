@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\SalaryCurrency;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+
+class CommercialQuote extends Model
+{
+    use SoftDeletes;
+
+    protected $fillable = [
+        'quote_number',
+        'crm_opportunity_id',
+        'crm_account_id',
+        'crm_contact_id',
+        'payment_terms',
+        'delivery_time',
+        'project_description',
+        'technical_summary',
+        'key_benefits',
+        'observations',
+        'quoted_at',
+        'presentation_currency',
+        'exchange_rate',
+        'validity_days',
+        'fob',
+        'general_discount_percent',
+        'vat_percent',
+        'vat_included',
+        'created_by_user_id',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'quoted_at' => 'date',
+            'presentation_currency' => SalaryCurrency::class,
+            'exchange_rate' => 'decimal:6',
+            'validity_days' => 'integer',
+            'general_discount_percent' => 'decimal:2',
+            'vat_percent' => 'decimal:2',
+            'vat_included' => 'boolean',
+        ];
+    }
+
+    public static function generateQuoteNumber(): string
+    {
+        $year = now()->format('Y');
+        $prefix = "COM-{$year}-";
+        $latest = static::query()
+            ->where('quote_number', 'like', "{$prefix}%")
+            ->orderByDesc('quote_number')
+            ->value('quote_number');
+
+        if (blank($latest)) {
+            return $prefix.'0001';
+        }
+
+        $sequence = (int) Str::afterLast($latest, '-');
+        $next = str_pad((string) ($sequence + 1), 4, '0', STR_PAD_LEFT);
+
+        return $prefix.$next;
+    }
+
+    public function opportunity(): BelongsTo
+    {
+        return $this->belongsTo(CrmOpportunity::class, 'crm_opportunity_id');
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(CrmAccount::class, 'crm_account_id');
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(CrmContact::class, 'crm_contact_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+}

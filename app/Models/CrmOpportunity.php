@@ -80,6 +80,93 @@ class CrmOpportunity extends Model
         return $this->hasMany(CrmCalendarEvent::class);
     }
 
+    public function commercialQuotes(): HasMany
+    {
+        return $this->hasMany(CommercialQuote::class);
+    }
+
+    public function resolvedPaymentTermsText(): string
+    {
+        if ($this->use_account_payment_terms && $this->account) {
+            return self::formatPaymentTerms(
+                $this->account->advance_percent,
+                $this->account->advance_days,
+                $this->account->on_delivery_percent,
+                $this->account->on_delivery_days,
+                $this->account->installation_percent,
+                $this->account->installation_days,
+            );
+        }
+
+        return self::formatPaymentTerms(
+            $this->advance_percent,
+            $this->advance_days,
+            $this->on_delivery_percent,
+            $this->on_delivery_days,
+            $this->installation_percent,
+            $this->installation_days,
+        );
+    }
+
+    public function resolvedVatPercentForQuote(): ?float
+    {
+        $treatment = $this->resolvedVatTreatment();
+
+        if (blank($treatment)) {
+            return null;
+        }
+
+        if (preg_match('/(\d+(?:\.\d+)?)/', (string) $treatment, $matches) === 1) {
+            return (float) $matches[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  float|int|string|null  $advancePercent
+     * @param  int|string|null  $advanceDays
+     * @param  float|int|string|null  $onDeliveryPercent
+     * @param  int|string|null  $onDeliveryDays
+     * @param  float|int|string|null  $installationPercent
+     * @param  int|string|null  $installationDays
+     */
+    protected static function formatPaymentTerms(
+        mixed $advancePercent,
+        mixed $advanceDays,
+        mixed $onDeliveryPercent,
+        mixed $onDeliveryDays,
+        mixed $installationPercent,
+        mixed $installationDays,
+    ): string {
+        $lines = [];
+
+        if (filled($advancePercent)) {
+            $lines[] = self::paymentLine('Anticipo', $advancePercent, $advanceDays);
+        }
+
+        if (filled($onDeliveryPercent)) {
+            $lines[] = self::paymentLine('Al entregar', $onDeliveryPercent, $onDeliveryDays);
+        }
+
+        if (filled($installationPercent)) {
+            $lines[] = self::paymentLine('Instalación', $installationPercent, $installationDays);
+        }
+
+        return implode("\n", array_filter($lines));
+    }
+
+    protected static function paymentLine(string $label, mixed $percent, mixed $days): string
+    {
+        $line = "{$label}: {$percent}%";
+
+        if (filled($days)) {
+            $line .= " · {$days} días";
+        }
+
+        return $line;
+    }
+
     public function resolvedVatTreatment(): ?string
     {
         if ($this->use_account_vat) {
