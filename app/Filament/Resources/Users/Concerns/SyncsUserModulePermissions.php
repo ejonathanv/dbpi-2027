@@ -36,7 +36,7 @@ trait SyncsUserModulePermissions
         $this->companyIds = $data['company_ids'] ?? [];
         unset($data['module_permissions'], $data['company_ids']);
 
-        return $this->normalizeCrmRecordScope($data);
+        return $this->normalizeHelpdeskSettings($this->normalizeCrmRecordScope($data));
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -45,7 +45,7 @@ trait SyncsUserModulePermissions
         $this->companyIds = $data['company_ids'] ?? [];
         unset($data['module_permissions'], $data['company_ids']);
 
-        return $this->normalizeCrmRecordScope($data);
+        return $this->normalizeHelpdeskSettings($this->normalizeCrmRecordScope($data));
     }
 
     /**
@@ -59,6 +59,28 @@ trait SyncsUserModulePermissions
 
         if (blank($crmLevel)) {
             $data['crm_record_scope'] = CrmRecordScope::All->value;
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeHelpdeskSettings(array $data): array
+    {
+        $permissions = $this->modulePermissions ?? [];
+        $helpdeskLevel = $permissions[AppModule::Helpdesk->value] ?? null;
+
+        if (blank($helpdeskLevel)) {
+            $data['can_create_helpdesk_tickets'] = true;
+            $data['helpdesk_auto_assign_on_create'] = false;
+            $data['helpdesk_employee_id'] = null;
+        }
+
+        if (! ($data['helpdesk_auto_assign_on_create'] ?? false)) {
+            $data['helpdesk_employee_id'] = null;
         }
 
         return $data;

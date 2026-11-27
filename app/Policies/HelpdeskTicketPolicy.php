@@ -21,7 +21,8 @@ class HelpdeskTicketPolicy
 
     public function create(User $user): bool
     {
-        return ModuleAccess::canEditModule($user, AppModule::Helpdesk);
+        return ModuleAccess::canEditModule($user, AppModule::Helpdesk)
+            && $user->canCreateHelpdeskTickets();
     }
 
     public function update(User $user, HelpdeskTicket $helpdeskTicket): bool

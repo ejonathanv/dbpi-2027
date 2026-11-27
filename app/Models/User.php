@@ -10,6 +10,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -27,6 +28,9 @@ class User extends Authenticatable implements FilamentUser
         'user_type',
         'is_active',
         'crm_record_scope',
+        'can_create_helpdesk_tickets',
+        'helpdesk_auto_assign_on_create',
+        'helpdesk_employee_id',
     ];
 
     protected $hidden = [
@@ -42,7 +46,36 @@ class User extends Authenticatable implements FilamentUser
             'user_type' => UserType::class,
             'is_active' => 'boolean',
             'crm_record_scope' => CrmRecordScope::class,
+            'can_create_helpdesk_tickets' => 'boolean',
+            'helpdesk_auto_assign_on_create' => 'boolean',
         ];
+    }
+
+    public function helpdeskEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'helpdesk_employee_id');
+    }
+
+    public function canCreateHelpdeskTickets(): bool
+    {
+        if ($this->isAdministrator()) {
+            return true;
+        }
+
+        if (! $this->hasModulePermission(AppModule::Helpdesk, ModulePermissionLevel::Edit)) {
+            return false;
+        }
+
+        return $this->can_create_helpdesk_tickets;
+    }
+
+    public function shouldAutoAssignHelpdeskTicketOnCreate(): bool
+    {
+        if (! $this->helpdesk_auto_assign_on_create) {
+            return false;
+        }
+
+        return $this->helpdesk_employee_id !== null;
     }
 
     public function restrictsCrmToOwnRecords(): bool

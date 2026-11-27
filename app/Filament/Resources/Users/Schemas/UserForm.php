@@ -7,6 +7,7 @@ use App\Enums\CrmRecordScope;
 use App\Enums\ModulePermissionLevel;
 use App\Enums\UserType;
 use App\Models\Company;
+use App\Models\Employee;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -97,6 +98,33 @@ class UserForm
                             ->required()
                             ->native(false),
                     ]),
+                Section::make('Helpdesk')
+                    ->columnSpanFull()
+                    ->visible(fn (Get $get): bool => self::isUsuarioType($get) && self::hasHelpdeskModulePermission($get))
+                    ->description('Opciones de creación y asignación de tickets para este usuario.')
+                    ->schema([
+                        Toggle::make('can_create_helpdesk_tickets')
+                            ->label('Puede generar tickets')
+                            ->default(true),
+                        Toggle::make('helpdesk_auto_assign_on_create')
+                            ->label('Autoasignarse al crear un ticket')
+                            ->helperText('Si está activo, al crear un ticket quedará como responsable según el empleado vinculado. Si no, el responsable se asignará después.')
+                            ->default(false)
+                            ->live(),
+                        Select::make('helpdesk_employee_id')
+                            ->label('Empleado vinculado (responsable)')
+                            ->options(fn (): array => Employee::query()
+                                ->orderBy('first_name')
+                                ->get()
+                                ->mapWithKeys(fn (Employee $employee): array => [
+                                    $employee->getKey() => $employee->fullName(),
+                                ])
+                                ->all())
+                            ->searchable()
+                            ->native(false)
+                            ->visible(fn (Get $get): bool => (bool) $get('helpdesk_auto_assign_on_create'))
+                            ->required(fn (Get $get): bool => (bool) $get('helpdesk_auto_assign_on_create')),
+                    ]),
                 Section::make('Empresas — Recursos Humanos')
                     ->columnSpanFull()
                     ->visible(fn (Get $get): bool => self::isUsuarioType($get) && self::hasRhModulePermission($get))
@@ -169,5 +197,10 @@ class UserForm
     public static function hasCrmModulePermission(Get $get): bool
     {
         return filled($get('module_permissions.'.AppModule::Crm->value));
+    }
+
+    public static function hasHelpdeskModulePermission(Get $get): bool
+    {
+        return filled($get('module_permissions.'.AppModule::Helpdesk->value));
     }
 }
