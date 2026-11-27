@@ -56,7 +56,7 @@ class CommercialFupForm
             Livewire::make(CommercialQuoteSummaryPanel::class, fn (Livewire $component): array => [
                 'ownerRecord' => $component->getRecord()->quote,
                 'pageClass' => EditCommercialQuote::class,
-            ])->lazyLoaded(),
+            ]),
         ];
     }
 
@@ -71,7 +71,7 @@ class CommercialFupForm
             Livewire::make(CommercialQuoteMarginPanel::class, fn (Livewire $component): array => [
                 'ownerRecord' => $component->getRecord()->quote,
                 'pageClass' => EditCommercialQuote::class,
-            ])->lazyLoaded(),
+            ]),
         ];
     }
 
@@ -87,7 +87,7 @@ class CommercialFupForm
                 'ownerRecord' => $component->getRecord()->quote,
                 'pageClass' => EditCommercialQuote::class,
                 'attachmentTypeFilter' => CommercialQuoteAttachmentType::PurchaseOrder->value,
-            ])->lazyLoaded(),
+            ]),
         ];
     }
 
@@ -102,7 +102,7 @@ class CommercialFupForm
             Livewire::make(CommercialQuoteAttachmentsPanel::class, fn (Livewire $component): array => [
                 'ownerRecord' => $component->getRecord()->quote,
                 'pageClass' => EditCommercialQuote::class,
-            ])->lazyLoaded(),
+            ]),
         ];
     }
 
@@ -117,7 +117,7 @@ class CommercialFupForm
             Livewire::make(CommercialFupContractsPanel::class, fn (Livewire $component): array => [
                 'ownerRecord' => $component->getRecord(),
                 'pageClass' => EditCommercialFup::class,
-            ])->lazyLoaded(),
+            ]),
         ];
     }
 }

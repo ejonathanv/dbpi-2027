@@ -23,6 +23,13 @@ class EditCommercialFup extends EditRecord
 
         if (blank($record->cover_payload)) {
             $data['cover_payload'] = CommercialFupCoverBuilder::defaultPayload($record);
+
+            return $data;
+        }
+
+        if (blank(data_get($record->cover_payload, 'billing.mub_percent'))) {
+            $defaults = CommercialFupCoverBuilder::defaultPayload($record);
+            data_set($data, 'cover_payload.billing.mub_percent', $defaults['billing']['mub_percent'] ?? '');
         }
 
         return $data;

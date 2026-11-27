@@ -28,6 +28,10 @@ class CommercialFupCoverBuilder
         $shipping = self::addressParts($account?->delivery_address);
         $billing = self::addressParts($account?->billing_address);
 
+        $quoteMarginPercent = $quote
+            ? (float) CommercialQuoteTotalsCalculator::forQuote($quote)['margin_percent']
+            : 0.0;
+
         return [
             'trade_name' => (string) ($account?->name ?? ''),
             'project_description' => (string) ($quote?->project_description ?? ''),
@@ -50,9 +54,7 @@ class CommercialFupCoverBuilder
                 'city_state' => $billing['city_state'] === '—' ? '' : $billing['city_state'],
                 'postal_code' => $billing['postal_code'] === '—' ? '' : $billing['postal_code'],
                 'rfc' => ($rfc = self::resolveAccountRfc($account)) === '—' ? '' : $rfc,
-                'mub_percent' => $account?->institutional_discount_percent !== null
-                    ? (string) $account->institutional_discount_percent
-                    : '',
+                'mub_percent' => number_format($quoteMarginPercent, 2, '.', ''),
                 'currency_code' => $quote?->presentation_currency?->value ?? 'USD',
                 'exchange_rate' => (string) ($quote?->exchange_rate ?? ''),
             ],
