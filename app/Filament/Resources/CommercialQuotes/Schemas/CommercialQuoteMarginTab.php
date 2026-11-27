@@ -184,6 +184,13 @@ class CommercialQuoteMarginTab
                 ->required()
                 ->minValue(1)
                 ->default(1),
+            TextInput::make('customer_discount_percent')
+                ->label('% de descuento al cliente')
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(100)
+                ->suffix('%')
+                ->default(0),
         ];
     }
 

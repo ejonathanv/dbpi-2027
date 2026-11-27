@@ -47,7 +47,7 @@ class CommercialQuoteEditSummaryWidget extends StatsOverviewWidget
                 ->descriptionIcon(Heroicon::OutlinedUser)
                 ->color('gray'),
             Stat::make('Importe cliente', '$'.number_format($totals['customer_amount'], 2, '.', ','))
-                ->description('Total productos')
+                ->description('Productos y recursos')
                 ->descriptionIcon(Heroicon::OutlinedCurrencyDollar)
                 ->color('primary'),
             Stat::make('Margen %', number_format($totals['margin_percent'], 2, '.', ',').' %')

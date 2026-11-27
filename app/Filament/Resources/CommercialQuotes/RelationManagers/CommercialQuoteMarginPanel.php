@@ -7,8 +7,8 @@ use App\Enums\CommercialQuoteMarginOverrideType;
 use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteMarginTab;
 use App\Models\CommercialQuoteGroup;
 use App\Models\CommercialQuoteLineItem;
+use App\Support\CommercialQuoteLineItemMarginCalculator;
 use App\Support\CommercialQuoteLineItemPersistence;
-use App\Support\CommercialQuoteProductMarginCalculator;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
@@ -251,7 +251,7 @@ class CommercialQuoteMarginPanel extends RelationManager
         return $this->makeMarginOverrideAction(
             name: 'overrideCustomerCost',
             heading: 'Costo de venta',
-            label: 'costo de venta (por unidad)',
+            label: 'costo de venta',
             type: CommercialQuoteMarginOverrideType::CustomerCost,
             isPercent: false,
         );
@@ -302,9 +302,9 @@ class CommercialQuoteMarginPanel extends RelationManager
             ->modalSubmitActionLabel('Guardar')
             ->fillForm(function (array $arguments) use ($type): array {
                 $item = CommercialQuoteLineItem::query()
-                    ->with('additionalCosts')
+                    ->with(['additionalCosts', 'personnel'])
                     ->findOrFail($arguments['lineItemId']);
-                $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
+                $margin = CommercialQuoteLineItemMarginCalculator::forLineItem($item);
 
                 $defaultValue = match ($type) {
                     CommercialQuoteMarginOverrideType::CustomerCost => $margin['default_customer_cost'],
@@ -324,9 +324,9 @@ class CommercialQuoteMarginPanel extends RelationManager
             })
             ->form(function (array $arguments) use ($label, $type, $isPercent): array {
                 $item = CommercialQuoteLineItem::query()
-                    ->with('additionalCosts')
+                    ->with(['additionalCosts', 'personnel'])
                     ->findOrFail($arguments['lineItemId']);
-                $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
+                $margin = CommercialQuoteLineItemMarginCalculator::forLineItem($item);
 
                 $defaultValue = match ($type) {
                     CommercialQuoteMarginOverrideType::CustomerCost => $margin['default_customer_cost'],
@@ -339,10 +339,17 @@ class CommercialQuoteMarginPanel extends RelationManager
                     ? number_format($defaultValue, 2).' %'
                     : '$'.number_format($defaultValue, 2);
 
+                $hintLabel = $label;
+                if ($type === CommercialQuoteMarginOverrideType::CustomerCost) {
+                    $hintLabel = $item->type === CommercialQuoteLineItemType::Personnel
+                        ? 'costo diario (USD)'
+                        : 'costo de venta (por unidad)';
+                }
+
                 return [
                     Placeholder::make('default_hint')
                         ->label('')
-                        ->content("El {$label} por defecto es: {$formattedDefault}"),
+                        ->content("El {$hintLabel} por defecto es: {$formattedDefault}"),
                     TextInput::make('manual_value')
                         ->label($isPercent ? 'Porcentaje manual' : 'Importe manual')
                         ->numeric()

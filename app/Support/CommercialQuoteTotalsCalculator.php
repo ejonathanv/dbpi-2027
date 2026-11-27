@@ -22,17 +22,20 @@ class CommercialQuoteTotalsCalculator
 
         $lineItems = CommercialQuoteLineItem::query()
             ->whereHas('group', fn ($query) => $query->where('commercial_quote_id', $quote->getKey()))
-            ->where('type', CommercialQuoteLineItemType::Product)
-            ->with('additionalCosts')
+            ->whereIn('type', [
+                CommercialQuoteLineItemType::Product,
+                CommercialQuoteLineItemType::Personnel,
+            ])
+            ->with(['additionalCosts', 'personnel'])
             ->get();
 
         $customerAmount = 0.0;
         $marginAmount = 0.0;
 
         foreach ($lineItems as $item) {
-            $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
-            $customerAmount += (float) $margin['customer_amount'];
-            $marginAmount += (float) $margin['margin_amount'];
+            $margin = CommercialQuoteLineItemMarginCalculator::forLineItem($item);
+            $customerAmount += (float) ($margin['customer_amount'] ?? 0);
+            $marginAmount += (float) ($margin['margin_amount'] ?? 0);
         }
 
         $marginPercent = $customerAmount > 0

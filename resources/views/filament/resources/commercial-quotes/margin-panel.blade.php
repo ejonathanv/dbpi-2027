@@ -118,6 +118,11 @@
                                             @include('filament.resources.commercial-quotes.partials.product-margin-table', ['item' => $item])
                                         </div>
                                     @endif
+                                    @if ($item->type === CommercialQuoteLineItemType::Personnel)
+                                        <div class="px-2 py-1">
+                                            @include('filament.resources.commercial-quotes.partials.personnel-margin-table', ['item' => $item])
+                                        </div>
+                                    @endif
                                 </div>
                             @endforeach
                         @endif
