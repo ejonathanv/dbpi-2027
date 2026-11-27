@@ -16,13 +16,16 @@ class CommercialPersonnel extends Model
 
     protected $fillable = [
         'name',
-        'role',
+        'daily_cost_mxn',
+        'daily_cost_usd',
         'is_active',
     ];
 
     protected function casts(): array
     {
         return [
+            'daily_cost_mxn' => 'decimal:2',
+            'daily_cost_usd' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
