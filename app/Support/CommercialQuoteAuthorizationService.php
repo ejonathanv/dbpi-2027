@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\CommercialQuoteAuthorizationRequestStatus;
 use App\Enums\CommercialQuoteAuthorizationReviewStatus;
 use App\Enums\CommercialQuoteAuthorizationStatus;
+use App\Enums\CommercialQuoteWorkflowStep;
 use App\Models\CommercialQuote;
 use App\Models\CommercialQuoteAuthorizationRequest;
 use App\Models\CommercialQuoteAuthorizationReview;
@@ -52,6 +53,7 @@ class CommercialQuoteAuthorizationService
         return DB::transaction(function () use ($quote, $requester, $reviewerUserIds, $snapshot): CommercialQuoteAuthorizationRequest {
             $quote->update([
                 'authorization_status' => CommercialQuoteAuthorizationStatus::PendingAuthorization,
+                'workflow_step' => CommercialQuoteWorkflowStep::WaitingInternalAuthorization,
                 'frozen_snapshot' => $snapshot,
                 'authorization_locked_at' => now(),
             ]);
@@ -147,6 +149,7 @@ class CommercialQuoteAuthorizationService
                 $request->update(['status' => CommercialQuoteAuthorizationRequestStatus::Rejected]);
                 $quote->update([
                     'authorization_status' => CommercialQuoteAuthorizationStatus::Rejected,
+                    'workflow_step' => CommercialQuoteWorkflowStep::InProgress,
                     'frozen_snapshot' => null,
                     'authorization_locked_at' => null,
                 ]);
@@ -158,6 +161,7 @@ class CommercialQuoteAuthorizationService
                 $request->update(['status' => CommercialQuoteAuthorizationRequestStatus::ChangesSuggested]);
                 $quote->update([
                     'authorization_status' => CommercialQuoteAuthorizationStatus::ChangesRequested,
+                    'workflow_step' => CommercialQuoteWorkflowStep::NegotiationReview,
                     'frozen_snapshot' => null,
                     'authorization_locked_at' => null,
                 ]);
@@ -184,6 +188,7 @@ class CommercialQuoteAuthorizationService
                 $request->update(['status' => CommercialQuoteAuthorizationRequestStatus::Approved]);
                 $quote->update([
                     'authorization_status' => CommercialQuoteAuthorizationStatus::Authorized,
+                    'workflow_step' => CommercialQuoteWorkflowStep::InternallyAuthorized,
                 ]);
             }
         });

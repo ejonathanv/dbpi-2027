@@ -435,3 +435,52 @@ html.dark .crm-account-logo-field .employee-drive-upload--previewable .filepond-
 .fi-commercial-quote-authorization .fi-fo-field-wrp {
     gap: 0;
 }
+
+.fi-commercial-quote-workflow .fi-fo-field-wrp {
+    gap: 0;
+}
+
+.fi-cq-workflow-track {
+    padding: 0.125rem 0;
+}
+
+.fi-cq-workflow-line {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 0;
+    z-index: 0;
+    height: 2px;
+    transform: translateY(-50%);
+    background-color: rgb(229 231 235);
+}
+
+html.dark .fi-cq-workflow-line {
+    background-color: rgb(63 63 70);
+}
+
+.fi-cq-workflow-pill {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-cq-workflow-pill--muted {
+    background-color: rgb(243 244 246);
+    color: rgb(107 114 128);
+}
+
+html.dark .fi-cq-workflow-pill--muted {
+    background-color: rgb(39 39 42);
+    color: rgb(161 161 170);
+}
+
+.fi-cq-workflow-pill--current {
+    background-color: var(--primary-600);
+    color: white;
+    font-weight: 600;
+}
+
+html.dark .fi-cq-workflow-pill--current {
+    background-color: var(--primary-500);
+    color: white;
+}

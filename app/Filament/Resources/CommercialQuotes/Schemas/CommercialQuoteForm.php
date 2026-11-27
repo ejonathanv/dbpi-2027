@@ -2,13 +2,17 @@
 
 namespace App\Filament\Resources\CommercialQuotes\Schemas;
 
+use App\Enums\CommercialQuoteAuthorizationStatus;
+use App\Enums\CommercialQuoteWorkflowStep;
 use App\Enums\SalaryCurrency;
+use App\Models\CommercialQuote;
 use App\Models\CrmAccount;
 use App\Models\CrmContact;
 use App\Models\SystemSetting;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -27,6 +31,15 @@ class CommercialQuoteForm
         return $schema
             ->columns(1)
             ->components([
+                ViewField::make('workflow_stepper')
+                    ->hiddenLabel()
+                    ->dehydrated(false)
+                    ->visible(fn (string $operation): bool => $operation === 'edit')
+                    ->view('filament.resources.commercial-quotes.workflow-stepper')
+                    ->viewData(fn (?CommercialQuote $record): array => [
+                        'quote' => $record,
+                    ])
+                    ->columnSpanFull(),
                 Tabs::make('Cotización')
                     ->tabs([
                         Tab::make('General')
@@ -56,6 +69,25 @@ class CommercialQuoteForm
     protected static function generalTab(): array
     {
         return [
+            Section::make('Etapa con el cliente')
+                ->description('Disponible después de la autorización interna.')
+                ->columns(2)
+                ->visible(fn (string $operation, ?CommercialQuote $record): bool => $operation === 'edit'
+                    && $record?->authorization_status === CommercialQuoteAuthorizationStatus::Authorized)
+                ->schema([
+                    Select::make('workflow_step')
+                        ->label('Etapa actual')
+                        ->options([
+                            CommercialQuoteWorkflowStep::InternallyAuthorized->value => CommercialQuoteWorkflowStep::InternallyAuthorized->getLabel(),
+                            CommercialQuoteWorkflowStep::AwaitingClientAuthorization->value => CommercialQuoteWorkflowStep::AwaitingClientAuthorization->getLabel(),
+                            CommercialQuoteWorkflowStep::NegotiationReview->value => CommercialQuoteWorkflowStep::NegotiationReview->getLabel(),
+                            CommercialQuoteWorkflowStep::Cancelled->value => CommercialQuoteWorkflowStep::Cancelled->getLabel(),
+                            CommercialQuoteWorkflowStep::ClientAuthorized->value => CommercialQuoteWorkflowStep::ClientAuthorized->getLabel(),
+                        ])
+                        ->native(false)
+                        ->required()
+                        ->columnSpanFull(),
+                ]),
             Section::make('Relación CRM')
                 ->columns(2)
                 ->schema([

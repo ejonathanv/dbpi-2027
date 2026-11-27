@@ -8,6 +8,7 @@ use App\Models\CommercialQuoteAuthorizationReview;
 use App\Models\CommercialQuoteAuthorizer;
 use App\Models\User;
 use App\Support\CommercialQuoteAuthorizationService;
+use App\Support\CommercialQuoteWorkflowService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -66,6 +67,104 @@ class EditCommercialQuote extends EditRecord
         $quote = $this->getRecord();
 
         return [
+            Action::make('markSentToClientForAuthorization')
+                ->label('Enviada al cliente para autorización')
+                ->icon(Heroicon::OutlinedPaperAirplane)
+                ->color('primary')
+                ->visible(fn (): bool => $quote->canMarkSentToClientForAuthorization())
+                ->requiresConfirmation()
+                ->modalHeading('Enviar al cliente para autorización')
+                ->modalDescription('La cotización quedará en espera de la respuesta del cliente.')
+                ->action(function (): void {
+                    Gate::authorize('update', $this->getRecord());
+
+                    try {
+                        CommercialQuoteWorkflowService::markSentToClientForAuthorization($this->getRecord());
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo actualizar la etapa')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->getRecord()->refresh();
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Cotización enviada al cliente')
+                        ->success()
+                        ->send();
+                }),
+            Action::make('markRequiresNegotiationOrRevision')
+                ->label('Requiere negociación o revisión')
+                ->icon(Heroicon::OutlinedArrowPath)
+                ->color('warning')
+                ->visible(fn (): bool => $quote->canMarkRequiresNegotiationOrRevision())
+                ->requiresConfirmation()
+                ->modalHeading('Requiere negociación o revisión')
+                ->modalDescription('La cotización volverá a ser editable. Al terminar los cambios deberá solicitarse autorización interna nuevamente.')
+                ->action(function (): void {
+                    Gate::authorize('update', $this->getRecord());
+
+                    try {
+                        CommercialQuoteWorkflowService::markRequiresNegotiationOrRevision($this->getRecord());
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo actualizar la etapa')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->getRecord()->refresh();
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Cotización en negociación o revisión')
+                        ->body('Ya puede editar la cotización. Después vuelva a solicitar autorización interna.')
+                        ->success()
+                        ->send();
+
+                    $this->dispatch('commercial-quote-margin-updated');
+                }),
+            Action::make('markClientAuthorized')
+                ->label('Autorizada por cliente')
+                ->icon(Heroicon::OutlinedCheckBadge)
+                ->color('success')
+                ->visible(fn (): bool => $quote->canMarkClientAuthorized())
+                ->requiresConfirmation()
+                ->modalHeading('Autorizada por cliente')
+                ->modalDescription('Confirme que el cliente autorizó esta cotización.')
+                ->action(function (): void {
+                    Gate::authorize('update', $this->getRecord());
+
+                    try {
+                        CommercialQuoteWorkflowService::markClientAuthorized($this->getRecord());
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo actualizar la etapa')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->getRecord()->refresh();
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Cotización autorizada por el cliente')
+                        ->success()
+                        ->send();
+
+                    $this->dispatch('commercial-quote-margin-updated');
+                }),
             Action::make('requestAuthorization')
                 ->label('Solicitar autorización')
                 ->icon(Heroicon::OutlinedShieldCheck)

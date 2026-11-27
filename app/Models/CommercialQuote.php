@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CommercialQuoteAuthorizationStatus;
+use App\Enums\CommercialQuoteWorkflowStep;
 use App\Enums\SalaryCurrency;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -39,6 +40,7 @@ class CommercialQuote extends Model
         'authorization_status',
         'frozen_snapshot',
         'authorization_locked_at',
+        'workflow_step',
     ];
 
     protected function casts(): array
@@ -54,7 +56,71 @@ class CommercialQuote extends Model
             'authorization_status' => CommercialQuoteAuthorizationStatus::class,
             'frozen_snapshot' => 'array',
             'authorization_locked_at' => 'datetime',
+            'workflow_step' => CommercialQuoteWorkflowStep::class,
         ];
+    }
+
+    public function activeWorkflowStep(): CommercialQuoteWorkflowStep
+    {
+        $step = $this->workflow_step ?? CommercialQuoteWorkflowStep::InProgress;
+
+        if ($step === CommercialQuoteWorkflowStep::Cancelled) {
+            return CommercialQuoteWorkflowStep::Cancelled;
+        }
+
+        if ($step === CommercialQuoteWorkflowStep::ClientAuthorized) {
+            return CommercialQuoteWorkflowStep::ClientAuthorized;
+        }
+
+        return match ($this->authorization_status) {
+            CommercialQuoteAuthorizationStatus::PendingAuthorization => CommercialQuoteWorkflowStep::WaitingInternalAuthorization,
+            CommercialQuoteAuthorizationStatus::ChangesRequested => CommercialQuoteWorkflowStep::NegotiationReview,
+            CommercialQuoteAuthorizationStatus::Rejected => CommercialQuoteWorkflowStep::InProgress,
+            CommercialQuoteAuthorizationStatus::Authorized => in_array($step, [
+                CommercialQuoteWorkflowStep::AwaitingClientAuthorization,
+                CommercialQuoteWorkflowStep::NegotiationReview,
+            ], true)
+                ? $step
+                : CommercialQuoteWorkflowStep::InternallyAuthorized,
+            default => $step,
+        };
+    }
+
+    /**
+     * @return 'completed'|'current'|'upcoming'
+     */
+    public function workflowStepVisualState(CommercialQuoteWorkflowStep $step): string
+    {
+        $active = $this->activeWorkflowStep();
+
+        if ($active === CommercialQuoteWorkflowStep::Cancelled) {
+            if ($step === CommercialQuoteWorkflowStep::Cancelled) {
+                return 'current';
+            }
+
+            return $step->order() < $active->order() ? 'completed' : 'upcoming';
+        }
+
+        if ($active === CommercialQuoteWorkflowStep::ClientAuthorized) {
+            if ($step === CommercialQuoteWorkflowStep::ClientAuthorized) {
+                return 'current';
+            }
+
+            return $step->order() < $active->order() ? 'completed' : 'upcoming';
+        }
+
+        $activeOrder = $active->order();
+        $stepOrder = $step->order();
+
+        if ($stepOrder < $activeOrder) {
+            return 'completed';
+        }
+
+        if ($step === $active) {
+            return 'current';
+        }
+
+        return 'upcoming';
     }
 
     public function isEditingLocked(): bool
@@ -63,6 +129,24 @@ class CommercialQuote extends Model
             CommercialQuoteAuthorizationStatus::PendingAuthorization,
             CommercialQuoteAuthorizationStatus::Authorized,
         ], true);
+    }
+
+    public function canMarkSentToClientForAuthorization(): bool
+    {
+        return $this->authorization_status === CommercialQuoteAuthorizationStatus::Authorized
+            && $this->activeWorkflowStep() === CommercialQuoteWorkflowStep::InternallyAuthorized;
+    }
+
+    public function canMarkClientAuthorized(): bool
+    {
+        return $this->authorization_status === CommercialQuoteAuthorizationStatus::Authorized
+            && $this->activeWorkflowStep() === CommercialQuoteWorkflowStep::AwaitingClientAuthorization;
+    }
+
+    public function canMarkRequiresNegotiationOrRevision(): bool
+    {
+        return $this->authorization_status === CommercialQuoteAuthorizationStatus::Authorized
+            && $this->activeWorkflowStep() === CommercialQuoteWorkflowStep::AwaitingClientAuthorization;
     }
 
     public function canRequestAuthorization(): bool
