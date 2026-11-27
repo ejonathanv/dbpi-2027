@@ -36,8 +36,24 @@
                 <td class="px-1 py-0.5 text-end">{{ $percent($margin['supplier_discount_percent']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $percent($margin['supplier_special_discount_percent']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $money($margin['supplier_special_discount_amount']) }}</td>
-                <td class="px-1 py-0.5 text-end">{{ $money($margin['extended_unit_price']) }}</td>
-                <td class="px-1 py-0.5 text-end font-medium">{{ $money($margin['supplier_amount']) }}</td>
+                <td class="px-1 py-0.5 text-end align-top">
+                    <div>{{ $money($margin['net_supplier_unit']) }}</div>
+                    @if ($margin['additional_breakdown'] !== [])
+                        <div class="mt-0.5 space-y-px text-end text-[8px] leading-snug text-gray-500 dark:text-gray-400">
+                            @foreach ($margin['additional_breakdown'] as $additionalCost)
+                                <div>{{ $additionalCost['concept'] }}: {{ $money($additionalCost['amount']) }}</div>
+                            @endforeach
+                        </div>
+                    @endif
+                </td>
+                <td class="px-1 py-0.5 text-end align-top font-medium">
+                    <div>{{ $money($margin['supplier_amount_net']) }}</div>
+                    @if ($margin['additional_total'] > 0)
+                        <div class="mt-0.5 text-[8px] font-normal text-gray-500 dark:text-gray-400">
+                            Adicionales: {{ $money($margin['additional_total']) }}
+                        </div>
+                    @endif
+                </td>
                 <td class="px-1 py-0.5 text-end">{{ $money($margin['customer_cost']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $percent($margin['customer_discount_percent']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $money($margin['customer_discount_amount']) }}</td>

@@ -12,7 +12,12 @@ class CommercialQuoteProductMarginCalculator
      *     supplier_discount_percent: float,
      *     supplier_special_discount_percent: float,
      *     supplier_special_discount_amount: float,
+     *     net_supplier_unit: float,
+     *     additional_per_unit: float,
+     *     additional_total: float,
+     *     additional_breakdown: array<int, array{concept: string, amount: float}>,
      *     extended_unit_price: float,
+     *     supplier_amount_net: float,
      *     supplier_amount: float,
      *     customer_cost: float,
      *     customer_discount_percent: float,
@@ -38,9 +43,19 @@ class CommercialQuoteProductMarginCalculator
         $supplierSpecialDiscountAmount = $afterSupplierDiscount * ($supplierSpecialDiscountPercent / 100);
         $netSupplierUnit = $afterSupplierDiscount - $supplierSpecialDiscountAmount;
 
-        $additionalPerUnit = (float) $item->additionalCosts->sum('amount');
+        $additionalBreakdown = $item->additionalCosts
+            ->map(fn ($cost): array => [
+                'concept' => (string) $cost->concept,
+                'amount' => (float) $cost->amount,
+            ])
+            ->values()
+            ->all();
+
+        $additionalPerUnit = (float) collect($additionalBreakdown)->sum('amount');
+        $additionalTotal = $additionalPerUnit * $quantity;
 
         $extendedUnitPrice = $netSupplierUnit + $additionalPerUnit;
+        $supplierAmountNet = $netSupplierUnit * $quantity;
         $supplierAmount = $extendedUnitPrice * $quantity;
 
         $customerCost = $extendedUnitPrice;
@@ -63,7 +78,12 @@ class CommercialQuoteProductMarginCalculator
             'supplier_discount_percent' => $supplierDiscountPercent,
             'supplier_special_discount_percent' => $supplierSpecialDiscountPercent,
             'supplier_special_discount_amount' => $supplierSpecialDiscountAmount,
+            'net_supplier_unit' => $netSupplierUnit,
+            'additional_per_unit' => $additionalPerUnit,
+            'additional_total' => $additionalTotal,
+            'additional_breakdown' => $additionalBreakdown,
             'extended_unit_price' => $extendedUnitPrice,
+            'supplier_amount_net' => $supplierAmountNet,
             'supplier_amount' => $supplierAmount,
             'customer_cost' => $customerCost,
             'customer_discount_percent' => $customerDiscountPercent,
