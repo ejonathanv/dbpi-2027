@@ -199,6 +199,19 @@ class CommercialQuoteMarginTab
     {
         return [
             self::contractSelect()->columnSpanFull(),
+            TextInput::make('supplier_cost')
+                ->label('Costo interno (USD)')
+                ->numeric()
+                ->minValue(0)
+                ->prefix('$')
+                ->default(0),
+            TextInput::make('customer_discount_percent')
+                ->label('% de descuento al cliente')
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(100)
+                ->suffix('%')
+                ->default(0),
         ];
     }
 

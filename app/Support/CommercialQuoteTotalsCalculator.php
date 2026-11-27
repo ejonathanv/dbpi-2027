@@ -25,8 +25,9 @@ class CommercialQuoteTotalsCalculator
             ->whereIn('type', [
                 CommercialQuoteLineItemType::Product,
                 CommercialQuoteLineItemType::Personnel,
+                CommercialQuoteLineItemType::Contract,
             ])
-            ->with(['additionalCosts', 'personnel'])
+            ->with(['additionalCosts', 'personnel', 'contract'])
             ->get();
 
         $customerAmount = 0.0;

@@ -15,6 +15,7 @@ class CommercialQuoteLineItemMarginCalculator
         return match ($item->type) {
             CommercialQuoteLineItemType::Product => CommercialQuoteProductMarginCalculator::forLineItem($item),
             CommercialQuoteLineItemType::Personnel => CommercialQuotePersonnelMarginCalculator::forLineItem($item),
+            CommercialQuoteLineItemType::Contract => CommercialQuoteContractMarginCalculator::forLineItem($item),
             default => [
                 'default_customer_cost' => 0.0,
                 'default_customer_amount' => 0.0,

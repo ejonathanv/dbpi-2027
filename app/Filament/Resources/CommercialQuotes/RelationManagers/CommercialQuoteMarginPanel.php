@@ -302,7 +302,7 @@ class CommercialQuoteMarginPanel extends RelationManager
             ->modalSubmitActionLabel('Guardar')
             ->fillForm(function (array $arguments) use ($type): array {
                 $item = CommercialQuoteLineItem::query()
-                    ->with(['additionalCosts', 'personnel'])
+                    ->with(['additionalCosts', 'personnel', 'contract'])
                     ->findOrFail($arguments['lineItemId']);
                 $margin = CommercialQuoteLineItemMarginCalculator::forLineItem($item);
 
@@ -324,7 +324,7 @@ class CommercialQuoteMarginPanel extends RelationManager
             })
             ->form(function (array $arguments) use ($label, $type, $isPercent): array {
                 $item = CommercialQuoteLineItem::query()
-                    ->with(['additionalCosts', 'personnel'])
+                    ->with(['additionalCosts', 'personnel', 'contract'])
                     ->findOrFail($arguments['lineItemId']);
                 $margin = CommercialQuoteLineItemMarginCalculator::forLineItem($item);
 
@@ -341,9 +341,11 @@ class CommercialQuoteMarginPanel extends RelationManager
 
                 $hintLabel = $label;
                 if ($type === CommercialQuoteMarginOverrideType::CustomerCost) {
-                    $hintLabel = $item->type === CommercialQuoteLineItemType::Personnel
-                        ? 'costo diario (USD)'
-                        : 'costo de venta (por unidad)';
+                    $hintLabel = match ($item->type) {
+                        CommercialQuoteLineItemType::Personnel => 'costo diario (USD)',
+                        CommercialQuoteLineItemType::Contract => 'costo de venta',
+                        default => 'costo de venta (por unidad)',
+                    };
                 }
 
                 return [
