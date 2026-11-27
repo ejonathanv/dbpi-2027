@@ -256,12 +256,101 @@ html.dark .fi-sidebar {
     box-shadow: 1px 0 4px 0 rgb(0 0 0 / 0.35);
 }
 
-/* Sidebar con fondo blanco (modo claro) */
+/* Sidebar modo claro: fondo #20234a y menú en blanco */
 html:not(.dark) .fi-sidebar,
 html:not(.dark) .fi-sidebar-header,
 html:not(.dark) .fi-sidebar-nav,
 html:not(.dark) .fi-sidebar-footer {
-    background-color: #ffffff;
+    background-color: #20234a;
+}
+
+html:not(.dark) .fi-sidebar .fi-logo.fi-logo-light {
+    display: none !important;
+}
+
+html:not(.dark) .fi-sidebar .fi-logo.fi-logo-dark {
+    display: block !important;
+}
+
+html:not(.dark) .fi-sidebar-header-controls::after,
+html:not(.dark) .fi-sidebar-footer {
+    border-color: rgb(255 255 255 / 0.12);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-group-label {
+    color: rgb(255 255 255 / 0.72);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-group-btn .fi-icon,
+html:not(.dark) .fi-sidebar .fi-sidebar-group-dropdown-trigger-btn .fi-icon,
+html:not(.dark) .fi-sidebar .fi-sidebar-group-collapse-btn .fi-icon,
+html:not(.dark) .fi-sidebar .fi-sidebar-item-btn > .fi-icon,
+html:not(.dark) .fi-sidebar .fi-sidebar-database-notifications-btn > .fi-icon,
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon,
+html:not(.dark) .fi-sidebar .fi-sidebar-group.fi-active .fi-sidebar-group-dropdown-trigger-btn .fi-icon {
+    color: #c2ad27;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-group-dropdown-trigger-btn:hover,
+html:not(.dark) .fi-sidebar .fi-sidebar-group-dropdown-trigger-btn:focus-visible {
+    background-color: rgb(255 255 255 / 0.08);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item-label,
+html:not(.dark) .fi-sidebar .fi-sidebar-database-notifications-btn > .fi-sidebar-database-notifications-btn-label {
+    color: #ffffff;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:focus-visible,
+html:not(.dark) .fi-sidebar .fi-sidebar-database-notifications-btn:hover,
+html:not(.dark) .fi-sidebar .fi-sidebar-database-notifications-btn:focus-visible,
+html:not(.dark) .fi-sidebar .fi-user-menu-trigger:hover,
+html:not(.dark) .fi-sidebar .fi-user-menu-trigger:focus-visible {
+    background-color: rgb(255 255 255 / 0.1);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: rgb(255 255 255 / 0.14);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+    color: #ffffff;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-grouped-border > .fi-sidebar-item-grouped-border-part {
+    background-color: #c2ad27;
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item-grouped-border-part-not-first,
+html:not(.dark) .fi-sidebar .fi-sidebar-item-grouped-border-part-not-last {
+    background-color: rgb(255 255 255 / 0.35);
+}
+
+html:not(.dark) .fi-sidebar .fi-sidebar-item-grouped-border-part {
+    background-color: rgb(255 255 255 / 0.55);
+}
+
+html:not(.dark) .fi-sidebar .fi-user-menu-trigger .fi-user-menu-trigger-text {
+    color: #ffffff;
+}
+
+html:not(.dark) .fi-sidebar .fi-user-menu-trigger .fi-icon {
+    color: rgb(255 255 255 / 0.75);
+}
+
+html:not(.dark) .fi-sidebar .fi-user-menu-trigger:hover .fi-icon,
+html:not(.dark) .fi-sidebar .fi-user-menu-trigger:focus-visible .fi-icon {
+    color: #ffffff;
+}
+
+html:not(.dark) .fi-sidebar .fi-icon-btn {
+    color: rgb(255 255 255 / 0.85);
+}
+
+html:not(.dark) .fi-sidebar .fi-icon-btn:hover,
+html:not(.dark) .fi-sidebar .fi-icon-btn:focus-visible {
+    color: #ffffff;
 }
 
 /* Sidebar alineado con el header en modo oscuro */

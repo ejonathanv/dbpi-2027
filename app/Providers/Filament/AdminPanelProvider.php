@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Enums\PanelNavigationGroup;
 use App\Filament\Pages\EscritorioDashboard;
+use App\Support\PanelBrandColors;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,7 +12,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -34,9 +34,9 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('DBPI')
             ->brandLogo(asset('img/svg/logo-dynacom.svg'))
             ->darkModeBrandLogo(asset('img/svg/logo-dynacom-white.svg'))
-            ->brandLogoHeight('2.25rem')
+            ->brandLogoHeight('1.85rem')
             ->colors([
-                'primary' => Color::hex('#ba1818'),
+                'primary' => PanelBrandColors::primary(),
             ])
             ->navigationGroups(collect(PanelNavigationGroup::sidebarGroups())
                 ->mapWithKeys(fn (PanelNavigationGroup $group): array => [
