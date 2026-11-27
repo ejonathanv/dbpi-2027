@@ -5,8 +5,7 @@ namespace App\Filament\Resources\CommercialQuotes\Schemas;
 use App\Enums\CommercialQuoteLineItemType;
 use App\Enums\HelpdeskContractValidityUnit;
 use App\Filament\Resources\CommercialQuotes\Pages\EditCommercialQuote;
-use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteGroupsRelationManager;
-use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteLineItemsRelationManager;
+use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteMarginPanel;
 use App\Models\CommercialPersonnel;
 use App\Models\CommercialProduct;
 use App\Models\CommercialQuoteLineItem;
@@ -36,11 +35,7 @@ class CommercialQuoteMarginTab
         }
 
         return [
-            Livewire::make(CommercialQuoteGroupsRelationManager::class, fn (Livewire $component): array => [
-                'ownerRecord' => $component->getRecord(),
-                'pageClass' => EditCommercialQuote::class,
-            ])->lazyLoaded(),
-            Livewire::make(CommercialQuoteLineItemsRelationManager::class, fn (Livewire $component): array => [
+            Livewire::make(CommercialQuoteMarginPanel::class, fn (Livewire $component): array => [
                 'ownerRecord' => $component->getRecord(),
                 'pageClass' => EditCommercialQuote::class,
             ])->lazyLoaded(),
@@ -355,10 +350,109 @@ class CommercialQuoteMarginTab
             CommercialQuoteLineItemType::Product => $item->product_alias
                 ?: $item->product?->name
                 ?: 'Producto',
-            CommercialQuoteLineItemType::Personnel => ($item->personnel?->name ?? 'Recurso')
-                .' · '.$item->personnel_quantity.' × '.$item->personnel_days.' días',
+            CommercialQuoteLineItemType::Personnel => $item->personnel?->name ?? 'Recurso',
             CommercialQuoteLineItemType::Contract => $item->contract?->name ?? 'Contrato',
         };
+    }
+
+    public static function lineItemCompactDetail(CommercialQuoteLineItem $item): string
+    {
+        return match ($item->type) {
+            CommercialQuoteLineItemType::Product => 'Cant. '.number_format((float) $item->product_quantity, 0, '.', ','),
+            CommercialQuoteLineItemType::Personnel => number_format((float) $item->personnel_quantity, 0, '.', ',')
+                .' × '.$item->personnel_days.' días',
+            CommercialQuoteLineItemType::Contract => $item->contract?->validityLabel() ?? '—',
+        };
+    }
+
+    /** @return array<int, mixed> */
+    public static function lineItemViewSchema(CommercialQuoteLineItem $item): array
+    {
+        return match ($item->type) {
+            CommercialQuoteLineItemType::Product => self::productViewSchema($item),
+            CommercialQuoteLineItemType::Personnel => self::personnelViewSchema($item),
+            CommercialQuoteLineItemType::Contract => self::contractViewSchema($item),
+        };
+    }
+
+    /** @return array<int, mixed> */
+    protected static function productViewSchema(CommercialQuoteLineItem $item): array
+    {
+        $additionalCosts = $item->additionalCosts
+            ->map(fn ($cost): string => "{$cost->concept}: $".number_format((float) $cost->amount, 2))
+            ->implode("\n") ?: '—';
+
+        return [
+            Placeholder::make('product_name')
+                ->label('Producto')
+                ->content($item->product?->name ?? '—'),
+            Placeholder::make('product_alias')
+                ->label('Alias')
+                ->content($item->product_alias ?: '—'),
+            Placeholder::make('product_quantity')
+                ->label('Cantidad')
+                ->content(number_format((float) $item->product_quantity, 4, '.', ',')),
+            Placeholder::make('supplier_name')
+                ->label('Proveedor')
+                ->content($item->supplier?->name ?? '—'),
+            Placeholder::make('supplier_cost')
+                ->label('Costo proveedor')
+                ->content('$'.number_format((float) $item->supplier_cost, 2)),
+            Placeholder::make('discounts')
+                ->label('Descuentos')
+                ->content(sprintf(
+                    'Proveedor: %s%% · Especial: %s%% · Cliente: %s%%',
+                    number_format((float) $item->supplier_discount_percent, 2),
+                    number_format((float) $item->supplier_special_discount_percent, 2),
+                    number_format((float) $item->customer_discount_percent, 2),
+                )),
+            Placeholder::make('additional_costs')
+                ->label('Costos adicionales (por pieza)')
+                ->content($additionalCosts)
+                ->columnSpanFull(),
+            Placeholder::make('flags')
+                ->label('Opciones de cotización')
+                ->content(collect([
+                    $item->show_part_number ? 'Mostrar no. de parte' : null,
+                    $item->show_product_image ? 'Mostrar imagen' : null,
+                    $item->hide_product_in_quote ? 'Oculto en cotización' : null,
+                    $item->product_exclude_from_margin ? 'No afecta margen' : null,
+                ])->filter()->implode(' · ') ?: '—')
+                ->columnSpanFull(),
+        ];
+    }
+
+    /** @return array<int, mixed> */
+    protected static function personnelViewSchema(CommercialQuoteLineItem $item): array
+    {
+        return [
+            Placeholder::make('personnel_name')
+                ->label('Recurso')
+                ->content($item->personnel?->name ?? '—'),
+            Placeholder::make('personnel_quantity')
+                ->label('Cantidad')
+                ->content(number_format((float) $item->personnel_quantity, 4, '.', ',')),
+            Placeholder::make('personnel_days')
+                ->label('Días')
+                ->content((string) $item->personnel_days),
+        ];
+    }
+
+    /** @return array<int, mixed> */
+    protected static function contractViewSchema(CommercialQuoteLineItem $item): array
+    {
+        return [
+            Placeholder::make('contract_name')
+                ->label('Contrato')
+                ->content($item->contract?->name ?? '—'),
+            Placeholder::make('contract_validity')
+                ->label('Vigencia')
+                ->content($item->contract?->validityLabel() ?? '—'),
+            Placeholder::make('contract_description')
+                ->label('Descripción')
+                ->content($item->contract?->description ?: '—')
+                ->columnSpanFull(),
+        ];
     }
 
     protected static function productImagePreview(Get $get): HtmlString|string

@@ -19,6 +19,7 @@ class CommercialQuoteLineItemPersistence
         $data['type'] = $type;
         $sortOrder = (int) $group->lineItems()->max('sort_order') + 1;
         $data['sort_order'] = $sortOrder;
+        $data = self::normalizeLineItemData($data);
 
         /** @var CommercialQuoteLineItem $item */
         $item = $group->lineItems()->create($data);
@@ -38,7 +39,7 @@ class CommercialQuoteLineItemPersistence
         $additionalCosts = $data['additionalCosts'] ?? null;
         unset($data['additionalCosts'], $data['type']);
 
-        $item->update($data);
+        $item->update(self::normalizeLineItemData($data));
 
         if ($item->type === CommercialQuoteLineItemType::Product && is_array($additionalCosts)) {
             self::syncAdditionalCosts($item, $additionalCosts);
@@ -65,6 +66,35 @@ class CommercialQuoteLineItemPersistence
                 'sort_order' => $sort,
             ]);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected static function normalizeLineItemData(array $data): array
+    {
+        $numericDefaults = [
+            'supplier_cost' => 0,
+            'supplier_discount_percent' => 0,
+            'supplier_special_discount_percent' => 0,
+            'customer_discount_percent' => 0,
+            'product_quantity' => 1,
+            'personnel_quantity' => 1,
+            'personnel_days' => 1,
+        ];
+
+        foreach ($numericDefaults as $key => $default) {
+            if (! array_key_exists($key, $data)) {
+                continue;
+            }
+
+            if ($data[$key] === null || $data[$key] === '') {
+                $data[$key] = $default;
+            }
+        }
+
+        return $data;
     }
 
     /**
