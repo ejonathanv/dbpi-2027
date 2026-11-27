@@ -59,7 +59,7 @@ class CommercialQuoteMarginPanel extends RelationManager
     public function createGroupAction(): Action
     {
         return Action::make('createGroup')
-            ->label('Agregar grupo')
+            ->label('Nuevo grupo')
             ->icon(Heroicon::OutlinedPlus)
             ->modalHeading('Nuevo grupo')
             ->modalSubmitActionLabel('Guardar')

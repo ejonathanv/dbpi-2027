@@ -1,25 +1,29 @@
 @php
     use App\Enums\CommercialQuoteLineItemType;
     use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteMarginTab;
+
+    $quote = $this->getOwnerRecord();
+    $exchangeRate = number_format((float) $quote->exchange_rate, 6, '.', ',');
 @endphp
 
-<div class="fi-resource-relation-manager flex flex-col gap-y-6">
-    <x-filament::section>
-        <x-slot name="heading">
-            Grupos de la cotización
-        </x-slot>
-
-        <x-slot name="headerEnd">
+<div class="fi-resource-relation-manager flex flex-col gap-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex shrink-0 items-center">
             {{ $this->createGroupAction }}
-        </x-slot>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+            Tipo de cambio (USD → MXN):
+            <span class="font-semibold tabular-nums text-gray-950 dark:text-white">{{ $exchangeRate }}</span>
+        </p>
+    </div>
 
-        @if ($this->groups->isEmpty())
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-                No hay grupos. Agregue uno para comenzar a armar la cotización.
-            </p>
-        @endif
+    @if ($this->groups->isEmpty())
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+            No hay grupos. Agregue uno para comenzar a armar la cotización.
+        </p>
+    @endif
 
-        <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-3">
             @foreach ($this->groups as $group)
                 <div
                     wire:key="quote-group-{{ $group->id }}"
@@ -120,8 +124,7 @@
                     </div>
                 </div>
             @endforeach
-        </div>
-    </x-filament::section>
+    </div>
 
     <x-filament-actions::modals />
 </div>
