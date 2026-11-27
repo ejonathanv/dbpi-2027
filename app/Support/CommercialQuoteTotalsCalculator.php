@@ -27,20 +27,30 @@ class CommercialQuoteTotalsCalculator
                 CommercialQuoteLineItemType::Personnel,
                 CommercialQuoteLineItemType::Contract,
             ])
-            ->with(['additionalCosts', 'personnel', 'contract'])
+            ->with(['group', 'additionalCosts', 'personnel', 'contract'])
             ->get();
 
         $customerAmount = 0.0;
+        $customerAmountForMargin = 0.0;
         $marginAmount = 0.0;
 
         foreach ($lineItems as $item) {
             $margin = CommercialQuoteLineItemMarginCalculator::forLineItem($item);
-            $customerAmount += (float) ($margin['customer_amount'] ?? 0);
-            $marginAmount += (float) ($margin['margin_amount'] ?? 0);
+            $lineCustomerAmount = (float) ($margin['customer_amount'] ?? 0);
+            $lineMarginAmount = (float) ($margin['margin_amount'] ?? 0);
+
+            $customerAmount += $lineCustomerAmount;
+
+            if ($item->group?->exclude_from_margin) {
+                continue;
+            }
+
+            $customerAmountForMargin += $lineCustomerAmount;
+            $marginAmount += $lineMarginAmount;
         }
 
-        $marginPercent = $customerAmount > 0
-            ? ($marginAmount / $customerAmount) * 100
+        $marginPercent = $customerAmountForMargin > 0
+            ? ($marginAmount / $customerAmountForMargin) * 100
             : 0.0;
 
         return [

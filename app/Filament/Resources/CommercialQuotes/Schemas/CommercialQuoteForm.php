@@ -152,7 +152,8 @@ class CommercialQuoteForm
                         ->minValue(0)
                         ->maxValue(100)
                         ->suffix('%')
-                        ->default(0),
+                        ->default(0)
+                        ->dehydrateStateUsing(fn (mixed $state): float => max(0, (float) (filled($state) ? $state : 0))),
                     TextInput::make('vat_percent')
                         ->label('% de IVA')
                         ->numeric()

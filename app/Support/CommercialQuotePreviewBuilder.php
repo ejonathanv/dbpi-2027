@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\CommercialQuoteLineItemType;
 use App\Enums\SalaryCurrency;
 use App\Models\CommercialQuote;
+use App\Models\CommercialQuoteGroup;
 use App\Models\CommercialQuoteLineItem;
 use App\Models\CrmAccount;
 use App\Models\SystemSetting;
@@ -39,15 +40,21 @@ class CommercialQuotePreviewBuilder
                 continue;
             }
 
+            if ($group->hide_items_in_quote) {
+                $collapsed = self::groupCollapsedRow($group, $quote);
+
+                if ($collapsed !== null) {
+                    $rows[] = $collapsed;
+                }
+
+                continue;
+            }
+
             if (! $group->hide_title_in_quote && filled($group->title)) {
                 $rows[] = [
                     'type' => 'group_title',
                     'title' => $group->title,
                 ];
-            }
-
-            if ($group->hide_items_in_quote) {
-                continue;
             }
 
             foreach ($group->lineItems as $item) {
@@ -137,6 +144,38 @@ class CommercialQuotePreviewBuilder
                 ?? 'DYNACOM- FPF-02 REV 2.3 NOV 1999 AAJR.'
             ),
             'footer_confidential' => 'CONFIDENTIAL DYNAMIC COMMUNICATIONS PROPRIETARY',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected static function groupCollapsedRow(CommercialQuoteGroup $group, CommercialQuote $quote): ?array
+    {
+        $subtotal = 0.0;
+
+        foreach ($group->lineItems as $item) {
+            $line = self::lineRow($item, $quote);
+
+            if ($line !== null) {
+                $subtotal += (float) $line['subtotal'];
+            }
+        }
+
+        if ($subtotal <= 0) {
+            return null;
+        }
+
+        $headline = filled($group->title) ? (string) $group->title : 'Grupo';
+
+        return [
+            'type' => 'line',
+            'qty' => 1,
+            'qty_label' => '1',
+            'description_headline' => $headline,
+            'description_extra' => '',
+            'unit' => $subtotal,
+            'subtotal' => $subtotal,
         ];
     }
 

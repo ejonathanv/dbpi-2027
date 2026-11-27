@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SalaryCurrency;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -47,6 +48,13 @@ class CommercialQuote extends Model
             'vat_percent' => 'decimal:2',
             'vat_included' => 'boolean',
         ];
+    }
+
+    protected function generalDiscountPercent(): Attribute
+    {
+        return Attribute::make(
+            set: fn (mixed $value): float => max(0, (float) (filled($value) ? $value : 0)),
+        );
     }
 
     public static function generateQuoteNumber(): string
