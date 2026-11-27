@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -317,5 +318,34 @@ class CommercialQuote extends Model
             'id',
             'id',
         );
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(CommercialQuoteAttachment::class);
+    }
+
+    public function fup(): HasOne
+    {
+        return $this->hasOne(CommercialFup::class, 'commercial_quote_id');
+    }
+
+    public function canGenerateFup(): bool
+    {
+        if ($this->isCancelled()) {
+            return false;
+        }
+
+        if ($this->authorization_status !== CommercialQuoteAuthorizationStatus::Authorized) {
+            return false;
+        }
+
+        if ($this->activeWorkflowStep() !== CommercialQuoteWorkflowStep::ClientAuthorized) {
+            return false;
+        }
+
+        return ! CommercialFup::withTrashed()
+            ->where('commercial_quote_id', $this->getKey())
+            ->exists();
     }
 }

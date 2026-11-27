@@ -12,7 +12,8 @@ class CommercialFupsTable
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('FUP')->searchable()->sortable(),
+                TextColumn::make('fup_number')->label('FUP')->searchable()->sortable(),
+                TextColumn::make('authorization_status')->label('Autorización')->badge(),
                 TextColumn::make('quote.quote_number')->label('Cotización'),
             ])
             ->filters([TrashedFilter::make()])

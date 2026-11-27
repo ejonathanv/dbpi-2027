@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\CommercialQuotes\Pages;
 
+use App\Filament\Resources\CommercialFups\CommercialFupResource;
 use App\Filament\Resources\CommercialQuotes\CommercialQuoteResource;
 use App\Filament\Resources\CommercialQuotes\Widgets\CommercialQuoteEditSummaryWidget;
 use App\Models\CommercialQuoteAuthorizationReview;
 use App\Models\CommercialQuoteAuthorizer;
 use App\Models\User;
+use App\Support\CommercialFupGenerationService;
 use App\Support\CommercialQuoteAuthorizationService;
 use App\Support\CommercialQuoteWorkflowService;
 use Filament\Actions\Action;
@@ -66,6 +68,73 @@ class EditCommercialQuote extends EditRecord
         $quote = $this->getRecord();
 
         return [
+            Action::make('openFup')
+                ->label('Ver FUP')
+                ->icon(Heroicon::OutlinedClipboardDocumentList)
+                ->color('gray')
+                ->visible(fn (): bool => $quote->fup()->exists())
+                ->url(fn (): string => CommercialFupResource::getUrl('edit', [
+                    'record' => $quote->fup()->first(),
+                ])),
+            Action::make('generateFup')
+                ->label('Generar FUP')
+                ->icon(Heroicon::OutlinedClipboardDocumentCheck)
+                ->color('primary')
+                ->visible(fn (): bool => $quote->canGenerateFup())
+                ->modalHeading('Generar FUP')
+                ->modalDescription('Se creará la FUP y se enviará a autorización con los datos congelados.')
+                ->form([
+                    CheckboxList::make('reviewer_ids')
+                        ->label('Autorizadores')
+                        ->options(function (): array {
+                            return CommercialQuoteAuthorizer::query()
+                                ->where('is_active', true)
+                                ->with('user')
+                                ->get()
+                                ->mapWithKeys(fn (CommercialQuoteAuthorizer $authorizer): array => [
+                                    (string) $authorizer->user_id => (string) ($authorizer->user?->name ?? 'Usuario'),
+                                ])
+                                ->all();
+                        })
+                        ->default(fn (): array => CommercialQuoteAuthorizer::query()
+                            ->where('is_active', true)
+                            ->pluck('user_id')
+                            ->map(fn (int $id): string => (string) $id)
+                            ->all())
+                        ->required()
+                        ->minItems(1)
+                        ->columns(1),
+                ])
+                ->action(function (array $data): void {
+                    $user = Filament::auth()->user();
+
+                    if (! $user instanceof User) {
+                        return;
+                    }
+
+                    try {
+                        $fup = CommercialFupGenerationService::createFromQuote(
+                            $this->getRecord(),
+                            $user,
+                            array_map('intval', $data['reviewer_ids'] ?? []),
+                        );
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo generar la FUP')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    Notification::make()
+                        ->title('FUP generada')
+                        ->success()
+                        ->send();
+
+                    $this->redirect(CommercialFupResource::getUrl('edit', ['record' => $fup]));
+                }),
             Action::make('resumeQuote')
                 ->label('Reanudar cotización')
                 ->icon(Heroicon::OutlinedPlay)

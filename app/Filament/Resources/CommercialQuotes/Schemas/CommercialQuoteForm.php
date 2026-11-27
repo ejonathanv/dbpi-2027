@@ -59,10 +59,7 @@ class CommercialQuoteForm
                             ->id(CommercialQuoteResource::EDIT_TAB_AUTORIZACIONES)
                             ->schema(fn (string $operation): array => CommercialQuoteAuthorizationTab::tabSchema($operation)),
                         Tab::make('Archivos adjuntos')
-                            ->schema([
-                                Placeholder::make('files_pending')
-                                    ->content('Esta sección se configurará en una siguiente fase.'),
-                            ]),
+                            ->schema(fn (string $operation): array => CommercialQuoteAttachmentsTab::tabSchema($operation)),
                     ])
                     ->columnSpanFull(),
             ]);
