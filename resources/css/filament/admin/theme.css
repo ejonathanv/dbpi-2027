@@ -431,3 +431,7 @@ html.dark .crm-account-logo-field .employee-drive-upload--previewable .filepond-
 .crm-account-logo-field .employee-drive-upload--previewable .filepond--file-status {
     display: none !important;
 }
+
+.fi-commercial-quote-authorization .fi-fo-field-wrp {
+    gap: 0;
+}

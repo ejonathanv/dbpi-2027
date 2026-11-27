@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CommercialQuotes\Pages;
 
 use App\Filament\Resources\CommercialQuotes\CommercialQuoteResource;
 use App\Filament\Resources\CommercialQuotes\Widgets\CommercialQuoteEditSummaryWidget;
+use App\Models\CommercialQuoteAuthorizationReview;
 use App\Models\CommercialQuoteAuthorizer;
 use App\Models\User;
 use App\Support\CommercialQuoteAuthorizationService;
@@ -17,6 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class EditCommercialQuote extends EditRecord
@@ -133,5 +135,47 @@ class EditCommercialQuote extends EditRecord
     protected function afterSave(): void
     {
         $this->dispatch('commercial-quote-margin-updated');
+    }
+
+    public function resendAuthorizationToReviewer(int $reviewId): void
+    {
+        $quote = $this->getRecord();
+
+        Gate::authorize('update', $quote);
+
+        $review = CommercialQuoteAuthorizationReview::query()
+            ->whereKey($reviewId)
+            ->whereHas(
+                'request',
+                fn ($query) => $query->where('commercial_quote_id', $quote->getKey()),
+            )
+            ->first();
+
+        if (! $review instanceof CommercialQuoteAuthorizationReview) {
+            Notification::make()
+                ->title('No se encontró la revisión')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            CommercialQuoteAuthorizationService::resendReviewNotification($review);
+        } catch (ValidationException $exception) {
+            Notification::make()
+                ->title('No se pudo reenviar')
+                ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->title('Solicitud reenviada')
+            ->body('Se notificó de nuevo a '.$review->user?->name.'.')
+            ->success()
+            ->send();
     }
 }
