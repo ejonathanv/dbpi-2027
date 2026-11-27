@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\SalaryCurrency;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -84,5 +86,23 @@ class CommercialQuote extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function groups(): HasMany
+    {
+        return $this->hasMany(CommercialQuoteGroup::class, 'commercial_quote_id')
+            ->orderBy('sort_order');
+    }
+
+    public function lineItems(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            CommercialQuoteLineItem::class,
+            CommercialQuoteGroup::class,
+            'commercial_quote_id',
+            'commercial_quote_group_id',
+            'id',
+            'id',
+        );
     }
 }

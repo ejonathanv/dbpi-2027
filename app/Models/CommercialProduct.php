@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 #[UsePolicy(CommercialCatalogPolicy::class)]
 class CommercialProduct extends Model
@@ -42,5 +43,16 @@ class CommercialProduct extends Model
     public function type(): BelongsTo
     {
         return $this->belongsTo(CommercialProductType::class, 'commercial_product_type_id');
+    }
+
+    public function primaryImageUrl(): ?string
+    {
+        $paths = $this->image_paths;
+
+        if (! is_array($paths) || $paths === []) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($paths[0]);
     }
 }
