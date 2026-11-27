@@ -26,6 +26,7 @@ class CrmOpportunitiesTable
                 TextColumn::make('stage')
                     ->label('Etapa')
                     ->badge()
+                    ->color(fn (CrmOpportunityStage $state): string => $state->getColor())
                     ->sortable(),
                 TextColumn::make('amount')
                     ->label('Cantidad')

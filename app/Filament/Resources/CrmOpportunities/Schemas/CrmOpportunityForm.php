@@ -6,6 +6,7 @@ use App\Enums\CrmOpportunitySource;
 use App\Enums\CrmOpportunityStage;
 use App\Enums\SalaryCurrency;
 use App\Models\CrmAccount;
+use App\Models\CrmOpportunity;
 use App\Models\CrmContact;
 use App\Models\User;
 use Filament\Forms\Components\DatePicker;
@@ -67,6 +68,11 @@ class CrmOpportunityForm
                         Select::make('stage')
                             ->label('Etapa')
                             ->options(CrmOpportunityStage::class)
+                            ->default(CrmOpportunityStage::Prospeccion)
+                            ->disabled(fn (?CrmOpportunity $record): bool => $record?->commercialQuotes()->exists() ?? false)
+                            ->helperText(fn (?CrmOpportunity $record): ?string => $record?->commercialQuotes()->exists()
+                                ? 'Se actualiza automáticamente según el avance de la cotización vinculada.'
+                                : null)
                             ->required()
                             ->native(false),
                         Select::make('source')
