@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\CommercialQuoteAuthorizationStatus;
 use App\Enums\CommercialQuoteWorkflowStep;
 use App\Enums\SalaryCurrency;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -121,6 +122,44 @@ class CommercialQuote extends Model
         }
 
         return 'upcoming';
+    }
+
+    public function scopeWhereActiveWorkflowStep(Builder $query, CommercialQuoteWorkflowStep $step): Builder
+    {
+        return match ($step) {
+            CommercialQuoteWorkflowStep::Cancelled => $query->where(
+                'workflow_step',
+                CommercialQuoteWorkflowStep::Cancelled,
+            ),
+            CommercialQuoteWorkflowStep::ClientAuthorized => $query->where(
+                'workflow_step',
+                CommercialQuoteWorkflowStep::ClientAuthorized,
+            ),
+            CommercialQuoteWorkflowStep::WaitingInternalAuthorization => $query->where(
+                'authorization_status',
+                CommercialQuoteAuthorizationStatus::PendingAuthorization,
+            ),
+            CommercialQuoteWorkflowStep::NegotiationReview => $query->where(
+                'authorization_status',
+                CommercialQuoteAuthorizationStatus::ChangesRequested,
+            ),
+            CommercialQuoteWorkflowStep::InternallyAuthorized => $query
+                ->where('authorization_status', CommercialQuoteAuthorizationStatus::Authorized)
+                ->where('workflow_step', CommercialQuoteWorkflowStep::InternallyAuthorized),
+            CommercialQuoteWorkflowStep::AwaitingClientAuthorization => $query
+                ->where('authorization_status', CommercialQuoteAuthorizationStatus::Authorized)
+                ->where('workflow_step', CommercialQuoteWorkflowStep::AwaitingClientAuthorization),
+            CommercialQuoteWorkflowStep::InProgress => $query
+                ->whereNotIn('workflow_step', [
+                    CommercialQuoteWorkflowStep::Cancelled->value,
+                    CommercialQuoteWorkflowStep::ClientAuthorized->value,
+                ])
+                ->whereNotIn('authorization_status', [
+                    CommercialQuoteAuthorizationStatus::PendingAuthorization->value,
+                    CommercialQuoteAuthorizationStatus::Authorized->value,
+                    CommercialQuoteAuthorizationStatus::ChangesRequested->value,
+                ]),
+        };
     }
 
     public function isCancelled(): bool
