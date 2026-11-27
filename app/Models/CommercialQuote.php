@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CommercialQuoteAuthorizationStatus;
 use App\Enums\SalaryCurrency;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,9 @@ class CommercialQuote extends Model
         'vat_percent',
         'vat_included',
         'created_by_user_id',
+        'authorization_status',
+        'frozen_snapshot',
+        'authorization_locked_at',
     ];
 
     protected function casts(): array
@@ -47,7 +51,41 @@ class CommercialQuote extends Model
             'general_discount_percent' => 'decimal:2',
             'vat_percent' => 'decimal:2',
             'vat_included' => 'boolean',
+            'authorization_status' => CommercialQuoteAuthorizationStatus::class,
+            'frozen_snapshot' => 'array',
+            'authorization_locked_at' => 'datetime',
         ];
+    }
+
+    public function isEditingLocked(): bool
+    {
+        return in_array($this->authorization_status, [
+            CommercialQuoteAuthorizationStatus::PendingAuthorization,
+            CommercialQuoteAuthorizationStatus::Authorized,
+        ], true);
+    }
+
+    public function canRequestAuthorization(): bool
+    {
+        if ($this->isEditingLocked()) {
+            return false;
+        }
+
+        if (! in_array($this->authorization_status, [
+            CommercialQuoteAuthorizationStatus::Draft,
+            CommercialQuoteAuthorizationStatus::ChangesRequested,
+            CommercialQuoteAuthorizationStatus::Rejected,
+        ], true)) {
+            return false;
+        }
+
+        return $this->lineItems()->exists();
+    }
+
+    public function authorizationRequests(): HasMany
+    {
+        return $this->hasMany(CommercialQuoteAuthorizationRequest::class)
+            ->orderByDesc('requested_at');
     }
 
     protected function generalDiscountPercent(): Attribute

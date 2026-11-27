@@ -36,10 +36,7 @@ class CommercialQuoteForm
                         Tab::make('Resumen')
                             ->schema(fn (string $operation): array => CommercialQuoteSummaryTab::tabSchema($operation)),
                         Tab::make('Autorizaciones')
-                            ->schema([
-                                Placeholder::make('auth_pending')
-                                    ->content('Esta sección se configurará en una siguiente fase.'),
-                            ]),
+                            ->schema(fn (string $operation): array => CommercialQuoteAuthorizationTab::tabSchema($operation)),
                         Tab::make('Comentarios')
                             ->schema([
                                 Placeholder::make('comments_pending')

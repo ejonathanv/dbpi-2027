@@ -34,9 +34,13 @@ class CommercialQuoteSummaryPanel extends RelationManager
      */
     public function getPreviewProperty(): array
     {
-        return CommercialQuotePreviewBuilder::forQuote(
-            $this->getOwnerRecord()->load(['account', 'contact']),
-        );
+        $quote = $this->getOwnerRecord()->load(['account', 'contact']);
+
+        if ($quote->isEditingLocked() && filled($quote->frozen_snapshot['preview'] ?? null)) {
+            return (array) $quote->frozen_snapshot['preview'];
+        }
+
+        return CommercialQuotePreviewBuilder::forQuote($quote);
     }
 
     #[On('commercial-quote-margin-updated')]

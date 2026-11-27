@@ -3,14 +3,23 @@
     use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteMarginTab;
 
     $quote = $this->getOwnerRecord();
+    $readOnly = $quote->isEditingLocked();
     $exchangeRate = number_format((float) $quote->exchange_rate, 6, '.', ',');
 @endphp
 
 <div class="fi-resource-relation-manager flex flex-col gap-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex shrink-0 items-center">
-            {{ $this->createGroupAction }}
+    @if ($readOnly)
+        <div class="rounded-lg border border-warning-300 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-500/40 dark:bg-warning-500/10 dark:text-warning-200">
+            Cotización bloqueada (autorización). Los importes mostrados están congelados.
         </div>
+    @endif
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        @unless ($readOnly)
+            <div class="flex shrink-0 items-center">
+                {{ $this->createGroupAction }}
+            </div>
+        @endunless
         <p class="text-sm text-gray-600 dark:text-gray-400">
             Tipo de cambio (USD → MXN):
             <span class="font-semibold tabular-nums text-gray-950 dark:text-white">{{ $exchangeRate }}</span>
@@ -52,22 +61,24 @@
                             {{ $group->line_items_count }} {{ $group->line_items_count === 1 ? 'elemento' : 'elementos' }}
                         </x-filament::badge>
 
-                        <div class="ms-auto flex flex-wrap items-center gap-1">
-                            <x-filament::dropdown placement="bottom-end">
-                                <x-slot name="trigger">
-                                    <x-filament::button size="sm" color="primary" icon="heroicon-o-plus">
-                                        Agregar
-                                    </x-filament::button>
-                                </x-slot>
-                                <x-filament::dropdown.list>
-                                    {{ ($this->addProductAction)(['groupId' => $group->id]) }}
-                                    {{ ($this->addPersonnelAction)(['groupId' => $group->id]) }}
-                                    {{ ($this->addContractAction)(['groupId' => $group->id]) }}
-                                </x-filament::dropdown.list>
-                            </x-filament::dropdown>
-                            {{ ($this->editGroupAction)(['groupId' => $group->id]) }}
-                            {{ ($this->deleteGroupAction)(['groupId' => $group->id]) }}
-                        </div>
+                        @unless ($readOnly)
+                            <div class="ms-auto flex flex-wrap items-center gap-1">
+                                <x-filament::dropdown placement="bottom-end">
+                                    <x-slot name="trigger">
+                                        <x-filament::button size="sm" color="primary" icon="heroicon-o-plus">
+                                            Agregar
+                                        </x-filament::button>
+                                    </x-slot>
+                                    <x-filament::dropdown.list>
+                                        {{ ($this->addProductAction)(['groupId' => $group->id]) }}
+                                        {{ ($this->addPersonnelAction)(['groupId' => $group->id]) }}
+                                        {{ ($this->addContractAction)(['groupId' => $group->id]) }}
+                                    </x-filament::dropdown.list>
+                                </x-filament::dropdown>
+                                {{ ($this->editGroupAction)(['groupId' => $group->id]) }}
+                                {{ ($this->deleteGroupAction)(['groupId' => $group->id]) }}
+                            </div>
+                        @endunless
                     </div>
 
                     <div x-show="open" x-collapse class="space-y-4 px-4 py-3">
@@ -108,8 +119,10 @@
                                         @endif
                                         <div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-1">
                                             {{ ($this->viewLineItemAction)(['lineItemId' => $item->id]) }}
-                                            {{ ($this->editLineItemAction)(['lineItemId' => $item->id]) }}
-                                            {{ ($this->deleteLineItemAction)(['lineItemId' => $item->id]) }}
+                                            @unless ($readOnly)
+                                                {{ ($this->editLineItemAction)(['lineItemId' => $item->id]) }}
+                                                {{ ($this->deleteLineItemAction)(['lineItemId' => $item->id]) }}
+                                            @endunless
                                         </div>
                                     </div>
 

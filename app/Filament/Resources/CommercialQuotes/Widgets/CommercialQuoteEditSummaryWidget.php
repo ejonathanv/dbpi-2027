@@ -39,7 +39,11 @@ class CommercialQuoteEditSummaryWidget extends StatsOverviewWidget
             return [];
         }
 
-        $totals = CommercialQuoteTotalsCalculator::forQuote($this->record);
+        if ($this->record->isEditingLocked() && filled($this->record->frozen_snapshot['totals'] ?? null)) {
+            $totals = (array) $this->record->frozen_snapshot['totals'];
+        } else {
+            $totals = CommercialQuoteTotalsCalculator::forQuote($this->record);
+        }
 
         return [
             Stat::make('Responsable', $totals['responsible_name'])

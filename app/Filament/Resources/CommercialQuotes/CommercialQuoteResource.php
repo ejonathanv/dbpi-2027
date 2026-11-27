@@ -6,6 +6,7 @@ use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CommercialQuotes\Pages\CreateCommercialQuote;
 use App\Filament\Resources\CommercialQuotes\Pages\EditCommercialQuote;
 use App\Filament\Resources\CommercialQuotes\Pages\ListCommercialQuotes;
+use App\Filament\Resources\CommercialQuotes\Pages\ReviewCommercialQuoteAuthorization;
 use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteForm;
 use App\Filament\Resources\CommercialQuotes\Tables\CommercialQuotesTable;
 use App\Models\CommercialQuote;
@@ -52,6 +53,7 @@ class CommercialQuoteResource extends Resource
             'index' => ListCommercialQuotes::route('/'),
             'create' => CreateCommercialQuote::route('/create'),
             'edit' => EditCommercialQuote::route('/{record}/edit'),
+            'review-authorization' => ReviewCommercialQuoteAuthorization::route('/{record}/authorization/{authorizationRequest}'),
         ];
     }
 

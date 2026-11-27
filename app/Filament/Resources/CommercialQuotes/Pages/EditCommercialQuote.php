@@ -4,14 +4,35 @@ namespace App\Filament\Resources\CommercialQuotes\Pages;
 
 use App\Filament\Resources\CommercialQuotes\CommercialQuoteResource;
 use App\Filament\Resources\CommercialQuotes\Widgets\CommercialQuoteEditSummaryWidget;
+use App\Models\CommercialQuoteAuthorizer;
+use App\Models\User;
+use App\Support\CommercialQuoteAuthorizationService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Validation\ValidationException;
 
 class EditCommercialQuote extends EditRecord
 {
     protected static string $resource = CommercialQuoteResource::class;
+
+    public function form(Schema $schema): Schema
+    {
+        $schema = parent::form($schema);
+
+        if ($this->getRecord()->isEditingLocked()) {
+            $schema->disabled();
+        }
+
+        return $schema;
+    }
 
     /**
      * @return array<class-string>
@@ -40,9 +61,71 @@ class EditCommercialQuote extends EditRecord
 
     protected function getHeaderActions(): array
     {
+        $quote = $this->getRecord();
+
         return [
-            DeleteAction::make(),
-            ForceDeleteAction::make(),
+            Action::make('requestAuthorization')
+                ->label('Solicitar autorización')
+                ->icon(Heroicon::OutlinedShieldCheck)
+                ->color('warning')
+                ->visible(fn (): bool => $quote->canRequestAuthorization())
+                ->modalHeading('Solicitar autorización')
+                ->modalDescription('La cotización quedará bloqueada con los importes actuales hasta que los autorizadores respondan.')
+                ->form([
+                    CheckboxList::make('reviewer_ids')
+                        ->label('Autorizadores')
+                        ->options(function (): array {
+                            return CommercialQuoteAuthorizer::query()
+                                ->where('is_active', true)
+                                ->with('user')
+                                ->get()
+                                ->mapWithKeys(fn (CommercialQuoteAuthorizer $authorizer): array => [
+                                    (string) $authorizer->user_id => (string) ($authorizer->user?->name ?? 'Usuario'),
+                                ])
+                                ->all();
+                        })
+                        ->default(fn (): array => CommercialQuoteAuthorizer::query()
+                            ->where('is_active', true)
+                            ->pluck('user_id')
+                            ->map(fn (int $id): string => (string) $id)
+                            ->all())
+                        ->required()
+                        ->minItems(1)
+                        ->columns(1),
+                ])
+                ->action(function (array $data): void {
+                    $reviewerIds = array_map('intval', $data['reviewer_ids'] ?? []);
+                    $user = Filament::auth()->user();
+
+                    if (! $user instanceof User) {
+                        return;
+                    }
+
+                    try {
+                        CommercialQuoteAuthorizationService::request($this->getRecord(), $user, $reviewerIds);
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo solicitar autorización')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->getRecord()->refresh();
+
+                    Notification::make()
+                        ->title('Autorización solicitada')
+                        ->success()
+                        ->send();
+
+                    $this->dispatch('commercial-quote-margin-updated');
+                }),
+            DeleteAction::make()
+                ->visible(fn (): bool => ! $quote->isEditingLocked()),
+            ForceDeleteAction::make()
+                ->visible(fn (): bool => ! $quote->isEditingLocked()),
             RestoreAction::make(),
         ];
     }
