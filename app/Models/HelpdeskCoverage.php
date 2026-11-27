@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Support\WeekdayOptions;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HelpdeskCoverage extends Model
@@ -12,7 +12,6 @@ class HelpdeskCoverage extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'crm_account_id',
         'name',
         'full_week',
         'weekdays',
@@ -30,9 +29,12 @@ class HelpdeskCoverage extends Model
         ];
     }
 
-    public function account(): BelongsTo
+    public function accounts(): BelongsToMany
     {
-        return $this->belongsTo(CrmAccount::class, 'crm_account_id');
+        return $this->belongsToMany(
+            CrmAccount::class,
+            'crm_account_helpdesk_coverage',
+        )->withTimestamps();
     }
 
     public function weekdaysLabel(): string

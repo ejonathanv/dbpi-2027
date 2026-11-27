@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\HelpdeskServiceAgreements\Tables;
 
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -16,9 +17,9 @@ class HelpdeskServiceAgreementsTable
                     ->label('Acuerdo')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('account.name')
-                    ->label('Cuenta')
-                    ->searchable()
+                TextColumn::make('accounts_count')
+                    ->label('Cuentas')
+                    ->counts('accounts')
                     ->sortable(),
                 TextColumn::make('severityResponses_count')
                     ->label('Severidades')
@@ -31,6 +32,11 @@ class HelpdeskServiceAgreementsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('accounts')
+                    ->label('Cuenta')
+                    ->relationship('accounts', 'name')
+                    ->searchable()
+                    ->preload(),
                 TrashedFilter::make(),
             ])
             ->defaultSort('name');

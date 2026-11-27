@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\HelpdeskCoverages;
 
 use App\Enums\PanelNavigationGroup;
+use App\Filament\Resources\Helpdesk\RelationManagers\HelpdeskAssignedAccountsRelationManager;
 use App\Filament\Resources\HelpdeskCoverages\Pages\CreateHelpdeskCoverage;
 use App\Filament\Resources\HelpdeskCoverages\Pages\EditHelpdeskCoverage;
 use App\Filament\Resources\HelpdeskCoverages\Pages\ListHelpdeskCoverages;
@@ -44,6 +45,13 @@ class HelpdeskCoverageResource extends Resource
     public static function table(Table $table): Table
     {
         return HelpdeskCoveragesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            HelpdeskAssignedAccountsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

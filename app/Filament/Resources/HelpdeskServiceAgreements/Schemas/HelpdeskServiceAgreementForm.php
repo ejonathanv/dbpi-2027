@@ -4,7 +4,6 @@ namespace App\Filament\Resources\HelpdeskServiceAgreements\Schemas;
 
 use App\Enums\HelpdeskSlaResponseUnit;
 use App\Enums\HelpdeskTicketSeverity;
-use App\Models\CrmAccount;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -22,14 +21,6 @@ class HelpdeskServiceAgreementForm
                 Section::make('Acuerdo de servicio')
                     ->columns(2)
                     ->schema([
-                        Select::make('crm_account_id')
-                            ->label('Cuenta (CRM)')
-                            ->options(fn (): array => CrmAccount::query()->orderBy('name')->pluck('name', 'id')->all())
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->native(false)
-                            ->columnSpanFull(),
                         TextInput::make('name')
                             ->label('Nombre del acuerdo')
                             ->required()

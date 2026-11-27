@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CrmAccountType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -70,18 +71,27 @@ class CrmAccount extends Model
         return $this->hasMany(CrmCalendarEvent::class);
     }
 
-    public function helpdeskContracts(): HasMany
+    public function helpdeskContracts(): BelongsToMany
     {
-        return $this->hasMany(HelpdeskContract::class, 'crm_account_id');
+        return $this->belongsToMany(
+            HelpdeskContract::class,
+            'crm_account_helpdesk_contract',
+        )->withTimestamps();
     }
 
-    public function helpdeskCoverages(): HasMany
+    public function helpdeskCoverages(): BelongsToMany
     {
-        return $this->hasMany(HelpdeskCoverage::class, 'crm_account_id');
+        return $this->belongsToMany(
+            HelpdeskCoverage::class,
+            'crm_account_helpdesk_coverage',
+        )->withTimestamps();
     }
 
-    public function helpdeskServiceAgreements(): HasMany
+    public function helpdeskServiceAgreements(): BelongsToMany
     {
-        return $this->hasMany(HelpdeskServiceAgreement::class, 'crm_account_id');
+        return $this->belongsToMany(
+            HelpdeskServiceAgreement::class,
+            'crm_account_helpdesk_service_agreement',
+        )->withTimestamps();
     }
 }

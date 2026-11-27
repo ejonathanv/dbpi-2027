@@ -9,6 +9,11 @@ class CreateHelpdeskCoverage extends CreateRecord
 {
     protected static string $resource = HelpdeskCoverageResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('edit', ['record' => $this->getRecord()]);
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         if ($data['full_week'] ?? false) {

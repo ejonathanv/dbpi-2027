@@ -2,10 +2,8 @@
 
 namespace App\Filament\Resources\HelpdeskCoverages\Schemas;
 
-use App\Models\CrmAccount;
 use App\Support\WeekdayOptions;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
@@ -23,14 +21,6 @@ class HelpdeskCoverageForm
                 Section::make('Cobertura')
                     ->columns(2)
                     ->schema([
-                        Select::make('crm_account_id')
-                            ->label('Cuenta (CRM)')
-                            ->options(fn (): array => CrmAccount::query()->orderBy('name')->pluck('name', 'id')->all())
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->native(false)
-                            ->columnSpanFull(),
                         TextInput::make('name')
                             ->label('Nombre de la cobertura')
                             ->required()

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,14 +12,16 @@ class HelpdeskServiceAgreement extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'crm_account_id',
         'name',
         'description',
     ];
 
-    public function account(): BelongsTo
+    public function accounts(): BelongsToMany
     {
-        return $this->belongsTo(CrmAccount::class, 'crm_account_id');
+        return $this->belongsToMany(
+            CrmAccount::class,
+            'crm_account_helpdesk_service_agreement',
+        )->withTimestamps();
     }
 
     public function severityResponses(): HasMany

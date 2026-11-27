@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\HelpdeskContracts\Tables;
 
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -16,9 +17,9 @@ class HelpdeskContractsTable
                     ->label('Contrato')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('account.name')
-                    ->label('Cuenta')
-                    ->searchable()
+                TextColumn::make('accounts_count')
+                    ->label('Cuentas')
+                    ->counts('accounts')
                     ->sortable(),
                 TextColumn::make('validityLabel')
                     ->label('Vigencia')
@@ -30,6 +31,11 @@ class HelpdeskContractsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('accounts')
+                    ->label('Cuenta')
+                    ->relationship('accounts', 'name')
+                    ->searchable()
+                    ->preload(),
                 TrashedFilter::make(),
             ])
             ->defaultSort('name');

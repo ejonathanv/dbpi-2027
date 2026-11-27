@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\HelpdeskContracts;
 
 use App\Enums\PanelNavigationGroup;
+use App\Filament\Resources\Helpdesk\RelationManagers\HelpdeskAssignedAccountsRelationManager;
 use App\Filament\Resources\HelpdeskContracts\Pages\CreateHelpdeskContract;
 use App\Filament\Resources\HelpdeskContracts\Pages\EditHelpdeskContract;
 use App\Filament\Resources\HelpdeskContracts\Pages\ListHelpdeskContracts;
@@ -44,6 +45,13 @@ class HelpdeskContractResource extends Resource
     public static function table(Table $table): Table
     {
         return HelpdeskContractsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            HelpdeskAssignedAccountsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
