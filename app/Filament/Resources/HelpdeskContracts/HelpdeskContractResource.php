@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\HelpdeskContracts;
 
 use App\Enums\PanelNavigationGroup;
-use App\Filament\Resources\Helpdesk\RelationManagers\HelpdeskAssignedAccountsRelationManager;
 use App\Filament\Resources\HelpdeskContracts\Pages\CreateHelpdeskContract;
 use App\Filament\Resources\HelpdeskContracts\Pages\EditHelpdeskContract;
 use App\Filament\Resources\HelpdeskContracts\Pages\ListHelpdeskContracts;
+use App\Filament\Resources\HelpdeskContracts\RelationManagers\HelpdeskContractAccountsRelationManager;
 use App\Filament\Resources\HelpdeskContracts\Schemas\HelpdeskContractForm;
 use App\Filament\Resources\HelpdeskContracts\Tables\HelpdeskContractsTable;
 use App\Models\HelpdeskContract;
@@ -50,7 +50,7 @@ class HelpdeskContractResource extends Resource
     public static function getRelations(): array
     {
         return [
-            HelpdeskAssignedAccountsRelationManager::class,
+            HelpdeskContractAccountsRelationManager::class,
         ];
     }
 

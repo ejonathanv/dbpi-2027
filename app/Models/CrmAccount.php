@@ -76,7 +76,9 @@ class CrmAccount extends Model
         return $this->belongsToMany(
             HelpdeskContract::class,
             'crm_account_helpdesk_contract',
-        )->withTimestamps();
+        )
+            ->withPivot(['starts_at', 'ends_at'])
+            ->withTimestamps();
     }
 
     public function helpdeskCoverages(): BelongsToMany
