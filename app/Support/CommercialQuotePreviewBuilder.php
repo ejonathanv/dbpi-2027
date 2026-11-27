@@ -7,8 +7,11 @@ use App\Enums\SalaryCurrency;
 use App\Models\CommercialQuote;
 use App\Models\CommercialQuoteLineItem;
 use App\Models\Company;
+use App\Models\CrmAccount;
 use App\Models\SystemSetting;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class CommercialQuotePreviewBuilder
 {
@@ -109,6 +112,7 @@ class CommercialQuotePreviewBuilder
 
         $contact = $quote->contact;
         $account = $quote->account;
+        $customerLogoUrl = self::customerLogoUrl($account);
 
         $validityDays = (int) ($quote->validity_days ?? 0);
         $pricesNote = $currencyCode === 'USD'
@@ -118,6 +122,7 @@ class CommercialQuotePreviewBuilder
         return [
             'issuer_address_lines' => $addressLines,
             'customer_company' => (string) ($account?->name ?? '—'),
+            'customer_logo_url' => $customerLogoUrl,
             'contact_name' => $contact?->fullName() ?: '—',
             'contact_email' => (string) ($contact?->email ?? ''),
             'contact_phone' => (string) ($contact?->phone ?? ''),
@@ -274,6 +279,25 @@ class CommercialQuotePreviewBuilder
         }
 
         return number_format($qty, 2, '.', ',');
+    }
+
+    protected static function customerLogoUrl(?CrmAccount $account): ?string
+    {
+        $path = CrmAccount::normalizeLogoPath($account?->logo_path);
+
+        if (blank($path)) {
+            return null;
+        }
+
+        try {
+            if (! Storage::disk('public')->exists($path)) {
+                return null;
+            }
+        } catch (Throwable) {
+            return null;
+        }
+
+        return '/storage/'.ltrim(str_replace('\\', '/', $path), '/');
     }
 
     protected static function plainText(?string $html): string

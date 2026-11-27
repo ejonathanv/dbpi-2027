@@ -22,6 +22,13 @@
             <tbody>
                 <tr class="align-top">
                     <td class="border border-gray-300 px-2 py-2 dark:border-white/20">
+                        @if (filled($preview['customer_logo_url'] ?? null))
+                            <img
+                                src="{{ $preview['customer_logo_url'] }}"
+                                alt=""
+                                class="mb-1.5 max-h-8 w-auto max-w-[7rem] object-contain object-left"
+                            />
+                        @endif
                         <div class="font-semibold">{{ $preview['customer_company'] }}</div>
                         <div class="mt-2 text-[10px] font-semibold">Contact:</div>
                         <div>{{ $preview['contact_name'] }}</div>
