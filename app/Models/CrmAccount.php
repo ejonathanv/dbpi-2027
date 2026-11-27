@@ -69,4 +69,19 @@ class CrmAccount extends Model
     {
         return $this->hasMany(CrmCalendarEvent::class);
     }
+
+    public function helpdeskContracts(): HasMany
+    {
+        return $this->hasMany(HelpdeskContract::class, 'crm_account_id');
+    }
+
+    public function helpdeskCoverages(): HasMany
+    {
+        return $this->hasMany(HelpdeskCoverage::class, 'crm_account_id');
+    }
+
+    public function helpdeskServiceAgreements(): HasMany
+    {
+        return $this->hasMany(HelpdeskServiceAgreement::class, 'crm_account_id');
+    }
 }

@@ -7,6 +7,7 @@ use Filament\Support\Contracts\HasLabel;
 
 enum HelpdeskTicketSeverity: string implements HasColor, HasLabel
 {
+    case Urgente = 'urgente';
     case Alta = 'alta';
     case Normal = 'normal';
     case Baja = 'baja';
@@ -14,6 +15,7 @@ enum HelpdeskTicketSeverity: string implements HasColor, HasLabel
     public function getLabel(): string
     {
         return match ($this) {
+            self::Urgente => 'Urgente',
             self::Alta => 'Alta',
             self::Normal => 'Normal',
             self::Baja => 'Baja',
@@ -23,6 +25,7 @@ enum HelpdeskTicketSeverity: string implements HasColor, HasLabel
     public function getColor(): string|array|null
     {
         return match ($this) {
+            self::Urgente => 'danger',
             self::Alta => 'danger',
             self::Normal => 'warning',
             self::Baja => 'success',
