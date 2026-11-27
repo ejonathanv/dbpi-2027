@@ -6,7 +6,6 @@ use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\HelpdeskTickets\Pages\CreateHelpdeskTicket;
 use App\Filament\Resources\HelpdeskTickets\Pages\EditHelpdeskTicket;
 use App\Filament\Resources\HelpdeskTickets\Pages\ListHelpdeskTickets;
-use App\Filament\Resources\HelpdeskTickets\RelationManagers\TicketEventsRelationManager;
 use App\Filament\Resources\HelpdeskTickets\Schemas\HelpdeskTicketForm;
 use App\Filament\Resources\HelpdeskTickets\Tables\HelpdeskTicketsTable;
 use App\Models\HelpdeskTicket;
@@ -49,9 +48,7 @@ class HelpdeskTicketResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            TicketEventsRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array
