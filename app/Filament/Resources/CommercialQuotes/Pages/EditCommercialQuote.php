@@ -46,4 +46,9 @@ class EditCommercialQuote extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    protected function afterSave(): void
+    {
+        $this->dispatch('commercial-quote-margin-updated');
+    }
 }
