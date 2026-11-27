@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Concerns;
 
 use App\Enums\AppModule;
 use App\Enums\CrmRecordScope;
+use App\Enums\HelpdeskTicketScope;
 use App\Enums\UserType;
 
 trait SyncsUserModulePermissions
@@ -77,6 +78,7 @@ trait SyncsUserModulePermissions
             $data['can_create_helpdesk_tickets'] = true;
             $data['helpdesk_auto_assign_on_create'] = false;
             $data['helpdesk_employee_id'] = null;
+            $data['helpdesk_ticket_scope'] = HelpdeskTicketScope::All->value;
         }
 
         if (! ($data['helpdesk_auto_assign_on_create'] ?? false)) {

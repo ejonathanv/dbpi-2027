@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AppModule;
 use App\Enums\CrmRecordScope;
+use App\Enums\HelpdeskTicketScope;
 use App\Enums\ModulePermissionLevel;
 use App\Enums\UserType;
 use Database\Factories\UserFactory;
@@ -31,6 +32,7 @@ class User extends Authenticatable implements FilamentUser
         'can_create_helpdesk_tickets',
         'helpdesk_auto_assign_on_create',
         'helpdesk_employee_id',
+        'helpdesk_ticket_scope',
     ];
 
     protected $hidden = [
@@ -48,6 +50,7 @@ class User extends Authenticatable implements FilamentUser
             'crm_record_scope' => CrmRecordScope::class,
             'can_create_helpdesk_tickets' => 'boolean',
             'helpdesk_auto_assign_on_create' => 'boolean',
+            'helpdesk_ticket_scope' => HelpdeskTicketScope::class,
         ];
     }
 

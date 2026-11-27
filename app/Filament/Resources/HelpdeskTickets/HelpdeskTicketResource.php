@@ -9,6 +9,8 @@ use App\Filament\Resources\HelpdeskTickets\Pages\ListHelpdeskTickets;
 use App\Filament\Resources\HelpdeskTickets\Schemas\HelpdeskTicketForm;
 use App\Filament\Resources\HelpdeskTickets\Tables\HelpdeskTicketsTable;
 use App\Models\HelpdeskTicket;
+use App\Models\User;
+use App\Support\HelpdeskRecordAccess;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -60,11 +62,32 @@ class HelpdeskTicketResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user instanceof User) {
+            HelpdeskRecordAccess::scopeTicketsQuery($query, $user);
+        }
+
+        return $query;
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-        return parent::getRecordRouteBindingEloquentQuery()
+        $query = parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        $user = auth()->user();
+
+        if ($user instanceof User) {
+            HelpdeskRecordAccess::scopeTicketsQuery($query, $user);
+        }
+
+        return $query;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\AppModule;
 use App\Enums\CrmRecordScope;
+use App\Enums\HelpdeskTicketScope;
 use App\Enums\ModulePermissionLevel;
 use App\Enums\UserType;
 use App\Models\Company;
@@ -101,8 +102,15 @@ class UserForm
                 Section::make('Helpdesk')
                     ->columnSpanFull()
                     ->visible(fn (Get $get): bool => self::isUsuarioType($get) && self::hasHelpdeskModulePermission($get))
-                    ->description('Opciones de creación y asignación de tickets para este usuario.')
+                    ->description('Opciones de creación, asignación y alcance de tickets para este usuario.')
                     ->schema([
+                        Select::make('helpdesk_ticket_scope')
+                            ->label('Tickets visibles')
+                            ->options(HelpdeskTicketScope::class)
+                            ->default(HelpdeskTicketScope::All)
+                            ->required()
+                            ->native(false)
+                            ->columnSpanFull(),
                         Toggle::make('can_create_helpdesk_tickets')
                             ->label('Puede generar tickets')
                             ->default(true),
