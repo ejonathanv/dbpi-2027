@@ -25,7 +25,15 @@
                         <span
                             @class([
                                 'fi-cq-workflow-pill inline-flex items-center justify-center rounded-full px-2 py-1.5 text-center text-[0.65rem] font-medium leading-tight whitespace-nowrap sm:px-2.5 sm:text-[0.7rem]',
-                                'fi-cq-workflow-pill--current' => $state === 'current',
+                                'fi-cq-workflow-pill--current' => $state === 'current'
+                                    && ! in_array($step, [
+                                        CommercialQuoteWorkflowStep::ClientAuthorized,
+                                        CommercialQuoteWorkflowStep::Cancelled,
+                                    ], true),
+                                'fi-cq-workflow-pill--current-success' => $state === 'current'
+                                    && $step === CommercialQuoteWorkflowStep::ClientAuthorized,
+                                'fi-cq-workflow-pill--current-danger' => $state === 'current'
+                                    && $step === CommercialQuoteWorkflowStep::Cancelled,
                                 'fi-cq-workflow-pill--muted' => $state !== 'current',
                             ])
                         >

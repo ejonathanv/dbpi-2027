@@ -50,11 +50,6 @@ class CommercialQuoteForm
                             ->schema(fn (string $operation): array => CommercialQuoteSummaryTab::tabSchema($operation)),
                         Tab::make('Autorizaciones')
                             ->schema(fn (string $operation): array => CommercialQuoteAuthorizationTab::tabSchema($operation)),
-                        Tab::make('Comentarios')
-                            ->schema([
-                                Placeholder::make('comments_pending')
-                                    ->content('Esta sección se configurará en una siguiente fase.'),
-                            ]),
                         Tab::make('Archivos adjuntos')
                             ->schema([
                                 Placeholder::make('files_pending')

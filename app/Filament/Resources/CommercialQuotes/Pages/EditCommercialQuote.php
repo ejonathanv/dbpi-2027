@@ -67,6 +67,72 @@ class EditCommercialQuote extends EditRecord
         $quote = $this->getRecord();
 
         return [
+            Action::make('resumeQuote')
+                ->label('Reanudar cotización')
+                ->icon(Heroicon::OutlinedPlay)
+                ->color('success')
+                ->visible(fn (): bool => $quote->canResumeQuote())
+                ->requiresConfirmation()
+                ->modalHeading('Reanudar cotización')
+                ->modalDescription('La cotización volverá a la etapa «En proceso» y podrá editarse de nuevo. Deberá solicitar autorización interna cuando corresponda.')
+                ->action(function (): void {
+                    Gate::authorize('update', $this->getRecord());
+
+                    try {
+                        CommercialQuoteWorkflowService::resumeQuote($this->getRecord());
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo reanudar')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->getRecord()->refresh();
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Cotización reanudada')
+                        ->success()
+                        ->send();
+
+                    $this->dispatch('commercial-quote-margin-updated');
+                }),
+            Action::make('cancelQuote')
+                ->label('Cancelar cotización')
+                ->icon(Heroicon::OutlinedXCircle)
+                ->color('danger')
+                ->visible(fn (): bool => $quote->canCancelQuote())
+                ->requiresConfirmation()
+                ->modalHeading('Cancelar cotización')
+                ->modalDescription('La cotización quedará cancelada y no podrá editarse hasta reanudarla.')
+                ->action(function (): void {
+                    Gate::authorize('update', $this->getRecord());
+
+                    try {
+                        CommercialQuoteWorkflowService::cancelQuote($this->getRecord());
+                    } catch (ValidationException $exception) {
+                        Notification::make()
+                            ->title('No se pudo cancelar')
+                            ->body(collect($exception->errors())->flatten()->first() ?? 'Revise los datos.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $this->getRecord()->refresh();
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Cotización cancelada')
+                        ->success()
+                        ->send();
+
+                    $this->dispatch('commercial-quote-margin-updated');
+                }),
             Action::make('markSentToClientForAuthorization')
                 ->label('Enviada al cliente para autorización')
                 ->icon(Heroicon::OutlinedPaperAirplane)

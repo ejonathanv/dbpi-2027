@@ -72,4 +72,33 @@ class CommercialQuoteWorkflowService
             'authorization_locked_at' => null,
         ]);
     }
+
+    public static function cancelQuote(CommercialQuote $quote): void
+    {
+        if (! $quote->canCancelQuote()) {
+            throw ValidationException::withMessages([
+                'workflow' => 'La cotización no puede cancelarse en esta etapa.',
+            ]);
+        }
+
+        $quote->update([
+            'workflow_step' => CommercialQuoteWorkflowStep::Cancelled,
+        ]);
+    }
+
+    public static function resumeQuote(CommercialQuote $quote): void
+    {
+        if (! $quote->canResumeQuote()) {
+            throw ValidationException::withMessages([
+                'workflow' => 'Solo se pueden reanudar cotizaciones canceladas.',
+            ]);
+        }
+
+        $quote->update([
+            'workflow_step' => CommercialQuoteWorkflowStep::InProgress,
+            'authorization_status' => CommercialQuoteAuthorizationStatus::Draft,
+            'frozen_snapshot' => null,
+            'authorization_locked_at' => null,
+        ]);
+    }
 }
