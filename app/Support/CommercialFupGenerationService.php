@@ -54,6 +54,10 @@ class CommercialFupGenerationService
                 'created_by_user_id' => $requester->getKey(),
             ]);
 
+            $fup->update([
+                'cover_payload' => CommercialFupCoverBuilder::defaultPayload($fup->fresh()),
+            ]);
+
             $quote->loadMissing(['groups.lineItems']);
 
             foreach ($quote->groups as $group) {

@@ -17,6 +17,6 @@ class CommercialFupsTable
                 TextColumn::make('quote.quote_number')->label('Cotización'),
             ])
             ->filters([TrashedFilter::make()])
-            ->defaultSort('name');
+            ->defaultSort('fup_number', 'desc');
     }
 }

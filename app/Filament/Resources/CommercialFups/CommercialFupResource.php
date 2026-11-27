@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CommercialFups;
 
 use App\Enums\PanelNavigationGroup;
-use App\Filament\Resources\CommercialFups\Pages\CreateCommercialFup;
 use App\Filament\Resources\CommercialFups\Pages\EditCommercialFup;
 use App\Filament\Resources\CommercialFups\Pages\ListCommercialFups;
 use App\Filament\Resources\CommercialFups\Schemas\CommercialFupForm;
@@ -46,11 +45,15 @@ class CommercialFupResource extends Resource
         return CommercialFupsTable::configure($table);
     }
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => ListCommercialFups::route('/'),
-            'create' => CreateCommercialFup::route('/create'),
             'edit' => EditCommercialFup::route('/{record}/edit'),
         ];
     }

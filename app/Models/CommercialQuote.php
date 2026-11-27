@@ -344,8 +344,6 @@ class CommercialQuote extends Model
             return false;
         }
 
-        return ! CommercialFup::withTrashed()
-            ->where('commercial_quote_id', $this->getKey())
-            ->exists();
+        return ! $this->fup()->exists();
     }
 }

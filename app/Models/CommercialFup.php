@@ -26,6 +26,7 @@ class CommercialFup extends Model
         'commitment_delivery_date',
         'commitment_installation_start_date',
         'commitment_project_date',
+        'cover_payload',
         'account_executive_user_id',
         'authorization_status',
         'frozen_snapshot',
@@ -40,6 +41,7 @@ class CommercialFup extends Model
             'commitment_delivery_date' => 'date',
             'commitment_installation_start_date' => 'date',
             'commitment_project_date' => 'date',
+            'cover_payload' => 'array',
             'authorization_status' => CommercialQuoteAuthorizationStatus::class,
             'frozen_snapshot' => 'array',
             'authorization_locked_at' => 'datetime',
@@ -94,18 +96,11 @@ class CommercialFup extends Model
 
     public function isEditingLocked(): bool
     {
-        return in_array($this->authorization_status, [
-            CommercialQuoteAuthorizationStatus::PendingAuthorization,
-            CommercialQuoteAuthorizationStatus::Authorized,
-        ], true);
+        return $this->authorization_status === CommercialQuoteAuthorizationStatus::Authorized;
     }
 
     public function canRequestAuthorization(): bool
     {
-        if ($this->isEditingLocked()) {
-            return false;
-        }
-
         return in_array($this->authorization_status, [
             CommercialQuoteAuthorizationStatus::Draft,
             CommercialQuoteAuthorizationStatus::ChangesRequested,

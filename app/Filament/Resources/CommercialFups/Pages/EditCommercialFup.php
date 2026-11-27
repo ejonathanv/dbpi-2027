@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CommercialFups\Pages;
 
 use App\Filament\Resources\CommercialFups\CommercialFupResource;
+use App\Support\CommercialFupCoverBuilder;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
@@ -16,12 +17,25 @@ class EditCommercialFup extends EditRecord
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $record = $this->getRecord();
+
+        if (blank($record->cover_payload)) {
+            $data['cover_payload'] = CommercialFupCoverBuilder::defaultPayload($record);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if ($this->getRecord()->isEditingLocked()) {
-            return [
-                'observations_and_recommendations' => $data['observations_and_recommendations'] ?? null,
-            ];
+            return [];
         }
 
         return $data;

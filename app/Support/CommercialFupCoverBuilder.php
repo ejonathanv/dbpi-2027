@@ -13,16 +13,11 @@ class CommercialFupCoverBuilder
     /**
      * @return array<string, mixed>
      */
-    public static function forFup(CommercialFup $fup): array
+    public static function defaultPayload(CommercialFup $fup): array
     {
-        if ($fup->isEditingLocked() && filled($fup->frozen_snapshot['cover'] ?? null)) {
-            return (array) $fup->frozen_snapshot['cover'];
-        }
-
         $fup->loadMissing([
             'quote.account',
             'quote.contact',
-            'quote.opportunity',
             'accountExecutive',
         ]);
 
@@ -34,54 +29,157 @@ class CommercialFupCoverBuilder
         $billing = self::addressParts($account?->billing_address);
 
         return [
+            'trade_name' => (string) ($account?->name ?? ''),
+            'project_description' => (string) ($quote?->project_description ?? ''),
+            'technical_contact_name' => $contact?->fullName() ?? '',
+            'technical_contact_email' => (string) ($contact?->email ?? ''),
+            'technical_contact_phone' => (string) ($contact?->phone ?? ''),
+            'shipping' => [
+                'legal_name' => (string) ($account?->legal_name ?? $account?->name ?? ''),
+                'street' => $shipping['street'] === '—' ? '' : $shipping['street'],
+                'city_state' => $shipping['city_state'] === '—' ? '' : $shipping['city_state'],
+                'postal_code' => $shipping['postal_code'] === '—' ? '' : $shipping['postal_code'],
+                'partial_deliveries' => ($account?->allows_partial_deliveries ?? false) ? 'SI' : 'NO',
+                'delivery_days' => (string) ($account?->delivery_days ?? ''),
+                'delivery_schedule' => (string) ($account?->delivery_schedule ?? ''),
+                'references' => (string) ($account?->general_description ?? ''),
+            ],
+            'billing' => [
+                'legal_name' => (string) ($account?->legal_name ?? $account?->name ?? ''),
+                'street' => $billing['street'] === '—' ? '' : $billing['street'],
+                'city_state' => $billing['city_state'] === '—' ? '' : $billing['city_state'],
+                'postal_code' => $billing['postal_code'] === '—' ? '' : $billing['postal_code'],
+                'rfc' => ($rfc = self::resolveAccountRfc($account)) === '—' ? '' : $rfc,
+                'mub_percent' => $account?->institutional_discount_percent !== null
+                    ? (string) $account->institutional_discount_percent
+                    : '',
+                'currency_code' => $quote?->presentation_currency?->value ?? 'USD',
+                'exchange_rate' => (string) ($quote?->exchange_rate ?? ''),
+            ],
+            'payment_rows' => [
+                ['concept' => 'ANTICIPO', 'percent' => self::rawPercent($account?->advance_percent), 'days' => self::rawDays($account?->advance_days)],
+                ['concept' => 'ENTREGA', 'percent' => self::rawPercent($account?->on_delivery_percent), 'days' => self::rawDays($account?->on_delivery_days)],
+                ['concept' => 'INSTALACION', 'percent' => self::rawPercent($account?->installation_percent), 'days' => self::rawDays($account?->installation_days)],
+            ],
+            'order_info' => [
+                'delivery_time' => (string) ($quote?->delivery_time ?? ''),
+            ],
+            'final_client' => [
+                'name' => (string) ($account?->legal_name ?? $account?->name ?? ''),
+                'street' => $shipping['street'] === '—' ? '' : $shipping['street'],
+                'city_state' => $shipping['city_state'] === '—' ? '' : $shipping['city_state'],
+                'postal_code' => $shipping['postal_code'] === '—' ? '' : $shipping['postal_code'],
+            ],
+            'fiscal' => [
+                'payment_method' => (string) ($account?->payment_method ?? ''),
+                'payment_form' => (string) ($account?->payment_form ?? ''),
+                'cfdi_use' => (string) ($account?->cfdi_use ?? ''),
+            ],
+            'administration_notes' => (string) ($account?->accounts_payable_info ?? ''),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function mergeCoverData(CommercialFup $fup): array
+    {
+        $defaults = self::defaultPayload($fup);
+        $stored = is_array($fup->cover_payload) ? $fup->cover_payload : [];
+
+        return array_replace_recursive($defaults, $stored);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function forFup(CommercialFup $fup): array
+    {
+        if ($fup->isEditingLocked() && filled($fup->frozen_snapshot['cover'] ?? null)) {
+            return (array) $fup->frozen_snapshot['cover'];
+        }
+
+        $fup->loadMissing(['quote', 'accountExecutive']);
+
+        return self::presentCover(self::mergeCoverData($fup), $fup);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected static function presentCover(array $data, CommercialFup $fup): array
+    {
+        $quote = $fup->quote;
+        $shipping = $data['shipping'] ?? [];
+        $billing = $data['billing'] ?? [];
+        $paymentRows = $data['payment_rows'] ?? [];
+
+        foreach ($paymentRows as $index => $row) {
+            $paymentRows[$index]['percent'] = filled($row['percent'] ?? null)
+                ? (string) $row['percent']
+                : '—';
+            $paymentRows[$index]['days'] = filled($row['days'] ?? null)
+                ? (string) $row['days']
+                : '—';
+        }
+
+        $partial = (string) ($shipping['partial_deliveries'] ?? '');
+        if (filled($partial) && ! str_starts_with($partial, '(')) {
+            $partial = '('.$partial.')';
+        }
+
+        return [
             'issuer_logo_url' => asset('img/svg/logo-dynacom.svg'),
             'fup_number' => $fup->fup_number,
             'quote_number' => (string) ($quote?->quote_number ?? '—'),
             'client_po_number' => (string) ($fup->client_po_number ?? '—'),
             'fup_date' => self::formatHeaderDate($fup->fup_date),
-            'trade_name' => (string) ($account?->name ?? '—'),
-            'project_description' => (string) ($quote?->project_description ?? '—'),
-            'technical_contact_name' => $contact?->fullName() ?? '—',
-            'technical_contact_email' => (string) ($contact?->email ?? '—'),
-            'technical_contact_phone' => (string) ($contact?->phone ?? '—'),
+            'trade_name' => (string) ($data['trade_name'] ?? '—'),
+            'project_description' => (string) ($data['project_description'] ?? '—'),
+            'technical_contact_name' => (string) ($data['technical_contact_name'] ?? '—'),
+            'technical_contact_email' => (string) ($data['technical_contact_email'] ?? '—'),
+            'technical_contact_phone' => (string) ($data['technical_contact_phone'] ?? '—'),
             'shipping' => [
-                'legal_name' => (string) ($account?->legal_name ?? $account?->name ?? '—'),
-                'street' => $shipping['street'],
-                'city_state' => $shipping['city_state'],
-                'postal_code' => $shipping['postal_code'],
-                'partial_deliveries' => ($account?->allows_partial_deliveries ?? false) ? '(SI)' : '(NO)',
-                'delivery_days' => (string) ($account?->delivery_days ?? '—'),
-                'delivery_schedule' => (string) ($account?->delivery_schedule ?? '—'),
-                'references' => (string) ($account?->general_description ?? '—'),
+                'legal_name' => (string) ($shipping['legal_name'] ?? '—'),
+                'street' => (string) ($shipping['street'] ?? '—'),
+                'city_state' => (string) ($shipping['city_state'] ?? '—'),
+                'postal_code' => (string) ($shipping['postal_code'] ?? '—'),
+                'partial_deliveries' => filled($partial) ? $partial : '—',
+                'delivery_days' => (string) ($shipping['delivery_days'] ?? '—'),
+                'delivery_schedule' => (string) ($shipping['delivery_schedule'] ?? '—'),
+                'references' => (string) ($shipping['references'] ?? '—'),
             ],
             'billing' => [
-                'legal_name' => (string) ($account?->legal_name ?? $account?->name ?? '—'),
-                'street' => $billing['street'],
-                'city_state' => $billing['city_state'],
-                'postal_code' => $billing['postal_code'],
-                'rfc' => self::resolveAccountRfc($account),
-                'mub_percent' => $account?->institutional_discount_percent !== null
-                    ? number_format((float) $account->institutional_discount_percent, 2).'%'
+                'legal_name' => (string) ($billing['legal_name'] ?? '—'),
+                'street' => (string) ($billing['street'] ?? '—'),
+                'city_state' => (string) ($billing['city_state'] ?? '—'),
+                'postal_code' => (string) ($billing['postal_code'] ?? '—'),
+                'rfc' => (string) ($billing['rfc'] ?? '—'),
+                'mub_percent' => filled($billing['mub_percent'] ?? null)
+                    ? number_format((float) $billing['mub_percent'], 2).'%'
                     : '—',
-                'currency_code' => $quote?->presentation_currency?->value ?? 'USD',
-                'exchange_rate' => number_format((float) ($quote?->exchange_rate ?? 0), 3, '.', ','),
+                'currency_code' => (string) ($billing['currency_code'] ?? '—'),
+                'exchange_rate' => filled($billing['exchange_rate'] ?? null)
+                    ? number_format((float) $billing['exchange_rate'], 3, '.', ',')
+                    : '—',
             ],
-            'payment_rows' => self::paymentRows($account),
+            'payment_rows' => $paymentRows,
             'order_info' => [
-                'delivery_time' => (string) ($quote?->delivery_time ?? '—'),
+                'delivery_time' => (string) (($data['order_info']['delivery_time'] ?? '') ?: '—'),
                 'commitment_delivery_date' => self::formatCommitmentDate($fup->commitment_delivery_date),
                 'commitment_installation_start_date' => self::formatCommitmentDate($fup->commitment_installation_start_date),
                 'commitment_project_date' => self::formatCommitmentDate($fup->commitment_project_date),
             ],
             'final_client' => [
-                'name' => (string) ($account?->legal_name ?? $account?->name ?? '—'),
-                'street' => $shipping['street'],
+                'name' => (string) (($data['final_client']['name'] ?? '') ?: '—'),
+                'street' => (string) (($data['final_client']['street'] ?? '') ?: '—'),
                 'account_executive' => (string) ($fup->accountExecutive?->name ?? '—'),
-                'city_state' => $shipping['city_state'],
-                'postal_code' => $shipping['postal_code'],
+                'city_state' => (string) (($data['final_client']['city_state'] ?? '') ?: '—'),
+                'postal_code' => (string) (($data['final_client']['postal_code'] ?? '') ?: '—'),
             ],
-            'fiscal_line' => self::fiscalLine($account),
-            'administration_notes' => (string) ($account?->accounts_payable_info ?? ''),
+            'fiscal_line' => self::fiscalLineFromPayload($data['fiscal'] ?? []),
+            'administration_notes' => (string) ($data['administration_notes'] ?? ''),
             'observations_and_recommendations' => trim(strip_tags((string) ($fup->observations_and_recommendations ?? ''))),
             'footer_legal' => (string) (
                 SystemSetting::get('commercial_quote_footer_legal')
@@ -144,51 +242,19 @@ class CommercialFupCoverBuilder
         ];
     }
 
-    /**
-     * @return list<array{concept: string, percent: string, days: string}>
-     */
-    protected static function paymentRows(?CrmAccount $account): array
-    {
-        if (! $account) {
-            return [
-                ['concept' => 'ANTICIPO', 'percent' => '—', 'days' => '—'],
-                ['concept' => 'ENTREGA', 'percent' => '—', 'days' => '—'],
-                ['concept' => 'INSTALACION', 'percent' => '—', 'days' => '—'],
-            ];
-        }
-
-        return [
-            [
-                'concept' => 'ANTICIPO',
-                'percent' => self::formatPercent($account->advance_percent),
-                'days' => self::formatDays($account->advance_days),
-            ],
-            [
-                'concept' => 'ENTREGA',
-                'percent' => self::formatPercent($account->on_delivery_percent),
-                'days' => self::formatDays($account->on_delivery_days),
-            ],
-            [
-                'concept' => 'INSTALACION',
-                'percent' => self::formatPercent($account->installation_percent),
-                'days' => self::formatDays($account->installation_days),
-            ],
-        ];
-    }
-
-    protected static function formatPercent(mixed $value): string
+    protected static function rawPercent(mixed $value): string
     {
         if ($value === null || $value === '') {
-            return '—';
+            return '';
         }
 
-        return number_format((float) $value, 0, '.', ',');
+        return (string) (float) $value;
     }
 
-    protected static function formatDays(mixed $value): string
+    protected static function rawDays(mixed $value): string
     {
         if ($value === null || $value === '') {
-            return '—';
+            return '';
         }
 
         return (string) (int) $value;
@@ -214,16 +280,15 @@ class CommercialFupCoverBuilder
         return '—';
     }
 
-    protected static function fiscalLine(?CrmAccount $account): string
+    /**
+     * @param  array<string, mixed>  $fiscal
+     */
+    protected static function fiscalLineFromPayload(array $fiscal): string
     {
-        if (! $account) {
-            return '—';
-        }
-
         $parts = array_filter([
-            filled($account->payment_method) ? 'METODO DE PAGO: '.$account->payment_method : null,
-            filled($account->payment_form) ? 'FORMA DE PAGO: '.$account->payment_form : null,
-            filled($account->cfdi_use) ? 'USO DE CFDI: '.$account->cfdi_use : null,
+            filled($fiscal['payment_method'] ?? null) ? 'METODO DE PAGO: '.$fiscal['payment_method'] : null,
+            filled($fiscal['payment_form'] ?? null) ? 'FORMA DE PAGO: '.$fiscal['payment_form'] : null,
+            filled($fiscal['cfdi_use'] ?? null) ? 'USO DE CFDI: '.$fiscal['cfdi_use'] : null,
         ]);
 
         return $parts !== [] ? implode(', ', $parts) : '—';

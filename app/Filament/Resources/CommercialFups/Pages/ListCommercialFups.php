@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CommercialFups\Pages;
 
 use App\Filament\Resources\CommercialFups\CommercialFupResource;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListCommercialFups extends ListRecords
@@ -12,6 +11,6 @@ class ListCommercialFups extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('Nuevo FUP')];
+        return [];
     }
 }

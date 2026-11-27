@@ -506,3 +506,28 @@ html.dark .fi-cq-workflow-pill--current-danger {
     background-color: rgb(220 38 38);
     color: white;
 }
+
+.fi-fup-cover-document {
+    width: 100%;
+    max-width: none;
+}
+
+.fi-fup-cover-document .fi-section {
+    --tw-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding-inline: 0;
+}
+
+.fi-fup-cover-document .fi-section-header-heading {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fi-fup-cover-document .fi-fo-field-wrp {
+    max-width: none;
+}

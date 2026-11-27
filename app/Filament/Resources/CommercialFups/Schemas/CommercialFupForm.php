@@ -11,8 +11,6 @@ use App\Filament\Resources\CommercialQuotes\Pages\EditCommercialQuote;
 use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteAttachmentsPanel;
 use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteMarginPanel;
 use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteSummaryPanel;
-use App\Models\CommercialFup;
-use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -29,17 +27,7 @@ class CommercialFupForm
                     ->persistTabInQueryString('tab')
                     ->tabs([
                         Tab::make('FUP')
-                            ->schema([
-                                ViewField::make('fup_cover_preview')
-                                    ->hiddenLabel()
-                                    ->dehydrated(false)
-                                    ->view('filament.resources.commercial-fups.fup-cover')
-                                    ->viewData(fn (?CommercialFup $record): array => [
-                                        'fup' => $record,
-                                    ])
-                                    ->columnSpanFull(),
-                                ...CommercialFupCoverTab::schema(),
-                            ]),
+                            ->schema(CommercialFupCoverTab::schema()),
                         Tab::make('Cotización')
                             ->schema(fn (string $operation): array => self::linkedQuoteSummarySchema($operation)),
                         Tab::make('Margen')
