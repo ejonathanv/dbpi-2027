@@ -10,6 +10,7 @@ use App\Filament\Resources\CommercialQuotes\Pages\ReviewCommercialQuoteAuthoriza
 use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteForm;
 use App\Filament\Resources\CommercialQuotes\Tables\CommercialQuotesTable;
 use App\Models\CommercialQuote;
+use App\Support\CommercialQuotePanelUrls;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -36,6 +37,13 @@ class CommercialQuoteResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCurrencyDollar;
 
     protected static ?string $recordTitleAttribute = 'quote_number';
+
+    public const EDIT_TAB_AUTORIZACIONES = CommercialQuotePanelUrls::EDIT_TAB_AUTORIZACIONES;
+
+    public static function getEditAuthorizationTabUrl(CommercialQuote $quote): string
+    {
+        return CommercialQuotePanelUrls::editAuthorizationTab($quote);
+    }
 
     public static function form(Schema $schema): Schema
     {

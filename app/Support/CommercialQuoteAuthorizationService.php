@@ -12,6 +12,7 @@ use App\Models\CommercialQuoteAuthorizationReview;
 use App\Models\CommercialQuoteAuthorizer;
 use App\Models\User;
 use App\Notifications\CommercialQuoteAuthorizationRequestedNotification;
+use App\Notifications\CommercialQuoteAuthorizationRespondedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -192,5 +193,41 @@ class CommercialQuoteAuthorizationService
                 ]);
             }
         });
+
+        $review->refresh()->loadMissing(['user', 'request.quote', 'request.requester']);
+
+        self::notifyStakeholdersOfReviewResponse($review);
+    }
+
+    protected static function notifyStakeholdersOfReviewResponse(CommercialQuoteAuthorizationReview $review): void
+    {
+        $request = $review->request;
+        $quote = $request?->quote;
+
+        if (! $request || ! $quote) {
+            return;
+        }
+
+        $recipientIds = array_values(array_unique(array_filter([
+            $request->requested_by_user_id,
+            $quote->created_by_user_id,
+        ])));
+
+        if ($recipientIds === []) {
+            return;
+        }
+
+        $reviewerId = $review->user_id;
+
+        User::query()
+            ->whereIn('id', $recipientIds)
+            ->get()
+            ->each(function (User $recipient) use ($review, $reviewerId): void {
+                if ($recipient->getKey() === $reviewerId) {
+                    return;
+                }
+
+                $recipient->notify(new CommercialQuoteAuthorizationRespondedNotification($review));
+            });
     }
 }

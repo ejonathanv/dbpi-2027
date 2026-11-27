@@ -61,7 +61,7 @@
                     <textarea
                         wire:model="approveNotes"
                         rows="3"
-                        class="fi-input block w-full rounded-lg border-gray-300 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
+                        class="fi-input block w-full rounded-lg border-gray-300 p-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
                         placeholder="Notas opcionales"
                     ></textarea>
                     <x-filament::button wire:click="approve" color="success" class="mt-3 w-full">
@@ -73,7 +73,7 @@
                     <textarea
                         wire:model="rejectNotes"
                         rows="3"
-                        class="fi-input block w-full rounded-lg border-gray-300 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
+                        class="fi-input block w-full rounded-lg border-gray-300 p-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
                         placeholder="Motivo del rechazo"
                     ></textarea>
                     <x-filament::button wire:click="reject" color="danger" class="mt-3 w-full">
@@ -85,7 +85,7 @@
                     <textarea
                         wire:model="changesNotes"
                         rows="3"
-                        class="fi-input block w-full rounded-lg border-gray-300 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
+                        class="fi-input block w-full rounded-lg border-gray-300 p-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
                         placeholder="Indique los cambios sugeridos"
                     ></textarea>
                     <x-filament::button wire:click="suggestChanges" color="info" class="mt-3 w-full">

@@ -11,7 +11,6 @@ use App\Support\CommercialQuoteAuthorizationService;
 use App\Support\CommercialQuoteWorkflowService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\CheckboxList;
@@ -290,8 +289,6 @@ class EditCommercialQuote extends EditRecord
                     $this->dispatch('commercial-quote-margin-updated');
                 }),
             DeleteAction::make()
-                ->visible(fn (): bool => ! $quote->isEditingLocked()),
-            ForceDeleteAction::make()
                 ->visible(fn (): bool => ! $quote->isEditingLocked()),
             RestoreAction::make(),
         ];

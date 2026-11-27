@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Enums\PanelNavigationGroup;
 use App\Filament\Pages\EscritorioDashboard;
 use App\Support\PanelBrandColors;
+use Filament\Enums\DatabaseNotificationsPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -35,6 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('img/svg/logo-dynacom.svg'))
             ->darkModeBrandLogo(asset('img/svg/logo-dynacom-white.svg'))
             ->brandLogoHeight('1.85rem')
+            ->databaseNotifications(position: DatabaseNotificationsPosition::Topbar)
             ->colors([
                 'primary' => PanelBrandColors::primary(),
             ])

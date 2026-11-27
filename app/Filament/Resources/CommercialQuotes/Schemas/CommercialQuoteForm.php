@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CommercialQuotes\Schemas;
 use App\Enums\CommercialQuoteAuthorizationStatus;
 use App\Enums\CommercialQuoteWorkflowStep;
 use App\Enums\SalaryCurrency;
+use App\Filament\Resources\CommercialQuotes\CommercialQuoteResource;
 use App\Models\CommercialQuote;
 use App\Models\CrmAccount;
 use App\Models\CrmContact;
@@ -41,6 +42,7 @@ class CommercialQuoteForm
                     ])
                     ->columnSpanFull(),
                 Tabs::make('Cotización')
+                    ->persistTabInQueryString('tab')
                     ->tabs([
                         Tab::make('General')
                             ->schema(self::generalTab()),
@@ -49,6 +51,7 @@ class CommercialQuoteForm
                         Tab::make('Resumen')
                             ->schema(fn (string $operation): array => CommercialQuoteSummaryTab::tabSchema($operation)),
                         Tab::make('Autorizaciones')
+                            ->id(CommercialQuoteResource::EDIT_TAB_AUTORIZACIONES)
                             ->schema(fn (string $operation): array => CommercialQuoteAuthorizationTab::tabSchema($operation)),
                         Tab::make('Archivos adjuntos')
                             ->schema([
