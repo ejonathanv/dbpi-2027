@@ -5,16 +5,25 @@ namespace App\Filament\Resources\CrmAccounts\Schemas;
 use App\Enums\CrmAccountType;
 use App\Filament\Resources\CrmAccounts\Pages\EditCrmAccount;
 use App\Filament\Resources\CrmAccounts\RelationManagers\ContactsRelationManager;
+use App\Models\CrmAccount;
+use Filament\Actions\Action;
+use Filament\Forms\Components\BaseFileUpload;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class CrmAccountForm
 {
@@ -44,21 +53,129 @@ class CrmAccountForm
             ]);
     }
 
+    protected static function formLogoPath(Get $get): ?string
+    {
+        return CrmAccount::normalizeLogoPath($get('logo_path'));
+    }
+
+    protected static function logoPreviewUrl(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        $disk = Storage::disk('public');
+
+        try {
+            if (! $disk->exists($path)) {
+                return null;
+            }
+        } catch (Throwable) {
+            return null;
+        }
+
+        return '/storage/'.ltrim(str_replace('\\', '/', $path), '/');
+    }
+
+    protected static function logoFileUpload(): FileUpload
+    {
+        return FileUpload::make('logo_path')
+            ->hiddenLabel()
+            ->image()
+            ->disk('public')
+            ->directory('crm/accounts/logos')
+            ->visibility('public')
+            ->maxFiles(1)
+            ->nullable()
+            ->panelLayout('compact')
+            ->panelAspectRatio('3:1')
+            ->imagePreviewHeight('112')
+            ->extraAttributes(['class' => 'employee-drive-upload employee-drive-upload--logo employee-drive-upload--previewable'])
+            ->getUploadedFileUsing(function (BaseFileUpload $component, string $file, string|array|null $storedFileNames): ?array {
+                $path = CrmAccount::normalizeLogoPath($file);
+
+                if (blank($path)) {
+                    return null;
+                }
+
+                $disk = $component->getDisk();
+
+                try {
+                    if (! $disk->exists($path)) {
+                        return null;
+                    }
+                } catch (Throwable) {
+                    return null;
+                }
+
+                try {
+                    $size = $disk->size($path);
+                    $type = $disk->mimeType($path);
+                } catch (Throwable) {
+                    $size = 0;
+                    $type = null;
+                }
+
+                return [
+                    'name' => (is_string($storedFileNames) ? $storedFileNames : null) ?? basename($path),
+                    'size' => $size,
+                    'type' => $type,
+                    'url' => '/storage/'.ltrim(str_replace('\\', '/', $path), '/'),
+                ];
+            });
+    }
+
+    /** @return array<int, mixed> */
+    protected static function logoFieldSchema(): array
+    {
+        return [
+            Section::make('Logo')
+                ->schema([
+                    ViewField::make('logo_preview')
+                        ->hiddenLabel()
+                        ->dehydrated(false)
+                        ->live()
+                        ->visible(fn (Get $get): bool => filled(self::formLogoPath($get)))
+                        ->view('filament.forms.employee-drive-tile')
+                        ->viewData(function (Get $get, ?Model $record): array {
+                            $path = self::formLogoPath($get);
+
+                            return [
+                                'kind' => 'photo',
+                                'layout' => 'thumb',
+                                'imageFit' => 'contain',
+                                'path' => $path,
+                                'previewUrl' => self::logoPreviewUrl($path),
+                                'title' => 'Logo de la cuenta',
+                                'originalName' => null,
+                                'uploadedAt' => $record?->getAttribute('updated_at'),
+                            ];
+                        }),
+                    self::logoFileUpload()
+                        ->live()
+                        ->hidden(fn (Get $get): bool => filled(self::formLogoPath($get))),
+                ])
+                ->footerActions([
+                    Action::make('removeLogo')
+                        ->label('Quitar logo')
+                        ->link()
+                        ->color('danger')
+                        ->visible(fn (Get $get): bool => filled(self::formLogoPath($get)))
+                        ->action(fn (Set $set) => $set('logo_path', null, shouldCallUpdatedHooks: true)),
+                ])
+                ->extraAttributes(['class' => 'employee-drive-grid employee-photos-repeater crm-account-logo-field'])
+                ->columnSpanFull(),
+        ];
+    }
+
     /** @return array<int, mixed> */
     protected static function generalTab(): array
     {
         return [
+            ...self::logoFieldSchema(),
             Section::make()
                 ->columns(2)
                 ->schema([
-                    FileUpload::make('logo_path')
-                        ->label('Logo')
-                        ->image()
-                        ->disk('public')
-                        ->directory('crm/accounts/logos')
-                        ->visibility('public')
-                        ->imageEditor()
-                        ->columnSpanFull(),
                     TextInput::make('name')
                         ->label('Nombre')
                         ->required()

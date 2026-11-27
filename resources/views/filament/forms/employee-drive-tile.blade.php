@@ -14,7 +14,9 @@
         }
     }
 
-    $url = filled($path) ? asset('storage/'.ltrim($path, '/')) : null;
+    $url = filled($previewUrl ?? null)
+        ? $previewUrl
+        : (filled($path) ? '/storage/'.ltrim(str_replace('\\', '/', $path), '/') : null);
     $extension = $path ? strtolower(pathinfo($path, PATHINFO_EXTENSION)) : null;
 
     $mimeType = null;
@@ -32,6 +34,8 @@
 
     $isPdf = ($mimeType === 'application/pdf') || $extension === 'pdf';
 
+    $imageFit = in_array($imageFit ?? 'cover', ['cover', 'contain'], true) ? ($imageFit ?? 'cover') : 'cover';
+
     $uploadedLabel = null;
     if (filled($uploadedAt ?? null)) {
         $uploadedLabel = \Illuminate\Support\Carbon::parse($uploadedAt)
@@ -43,6 +47,7 @@
 <div @class([
     'employee-drive-tile',
     'employee-drive-tile--thumb-only' => ($layout ?? 'full') === 'thumb',
+    'employee-drive-tile--fit-contain' => $imageFit === 'contain',
 ])>
   <div class="employee-drive-tile__preview-wrap">
   <a
@@ -68,7 +73,10 @@
         <img
             src="{{ $url }}"
             alt=""
-            class="employee-drive-tile__image"
+            @class([
+                'employee-drive-tile__image',
+                'employee-drive-tile__image--contain' => $imageFit === 'contain',
+            ])
             loading="lazy"
         />
     @elseif ($url && $isPdf)

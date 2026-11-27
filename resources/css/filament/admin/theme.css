@@ -140,6 +140,14 @@ html.dark .employee-drive-grid .fi-fo-repeater-item:focus-within .fi-fo-repeater
     object-fit: cover;
 }
 
+.employee-drive-tile__image--contain,
+.employee-drive-tile--fit-contain .employee-drive-tile__image {
+    object-fit: contain;
+    object-position: center;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
 html.dark .employee-drive-tile__preview {
     background-color: rgb(39 39 42);
 }
@@ -364,4 +372,62 @@ html.dark .fi-sidebar-footer {
 /* Cotización — indicadores superiores (valores más compactos) */
 .commercial-quote-edit-summary .fi-wi-stats-overview-stat-value {
     @apply text-lg font-semibold tracking-tight;
+}
+
+.crm-account-logo-field {
+    max-width: min(100%, 22rem);
+}
+
+.crm-account-logo-field .fi-section-content-ctn > .fi-fo-component-ctn {
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid rgb(229 231 235);
+    border-radius: 0.75rem;
+}
+
+html.dark .crm-account-logo-field .fi-section-content-ctn > .fi-fo-component-ctn {
+    background: rgb(24 24 27);
+    border-color: rgb(63 63 70);
+}
+
+.crm-account-logo-field .employee-drive-tile__preview {
+    height: 7.5rem;
+    min-height: 7.5rem;
+    max-height: 7.5rem;
+    margin-bottom: 0;
+}
+
+.crm-account-logo-field .employee-drive-tile__preview--image {
+    background-image: none;
+    background-size: contain;
+}
+
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--root {
+    max-height: 7.5rem;
+    min-height: 7.5rem;
+    height: 7.5rem;
+}
+
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--panel-root {
+    height: 100%;
+}
+
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--list-scroller,
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--image-preview-wrapper {
+    display: block !important;
+    height: 100%;
+}
+
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--image-preview {
+    object-fit: contain !important;
+    background: rgb(249 250 251);
+}
+
+html.dark .crm-account-logo-field .employee-drive-upload--previewable .filepond--image-preview {
+    background: rgb(39 39 42);
+}
+
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--file-info,
+.crm-account-logo-field .employee-drive-upload--previewable .filepond--file-status {
+    display: none !important;
 }
