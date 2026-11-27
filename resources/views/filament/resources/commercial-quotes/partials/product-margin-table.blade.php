@@ -54,7 +54,15 @@
                         </div>
                     @endif
                 </td>
-                <td class="px-1 py-0.5 text-end">{{ $money($margin['customer_cost']) }}</td>
+                <td class="px-1 py-0.5 align-top">
+                    @include('filament.resources.commercial-quotes.partials.margin-clickable-value', [
+                        'action' => 'overrideCustomerCost',
+                        'lineItemId' => $item->id,
+                        'default' => $margin['default_customer_cost'],
+                        'effective' => $margin['customer_cost'],
+                        'format' => 'money',
+                    ])
+                </td>
                 <td class="px-1 py-0.5 text-end">{{ $percent($margin['customer_discount_percent']) }}</td>
                 <td class="px-1 py-0.5 text-end">{{ $money($margin['customer_discount_amount']) }}</td>
                 <td class="px-1 py-0.5 align-top">

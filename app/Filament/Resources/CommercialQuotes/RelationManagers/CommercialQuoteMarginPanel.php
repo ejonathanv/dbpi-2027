@@ -238,6 +238,17 @@ class CommercialQuoteMarginPanel extends RelationManager
             });
     }
 
+    public function overrideCustomerCostAction(): Action
+    {
+        return $this->makeMarginOverrideAction(
+            name: 'overrideCustomerCost',
+            heading: 'Costo de venta',
+            label: 'costo de venta (por unidad)',
+            type: CommercialQuoteMarginOverrideType::CustomerCost,
+            isPercent: false,
+        );
+    }
+
     public function overrideCustomerAmountAction(): Action
     {
         return $this->makeMarginOverrideAction(
@@ -288,6 +299,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                 $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
 
                 $defaultValue = match ($type) {
+                    CommercialQuoteMarginOverrideType::CustomerCost => $margin['default_customer_cost'],
                     CommercialQuoteMarginOverrideType::CustomerAmount => $margin['default_customer_amount'],
                     CommercialQuoteMarginOverrideType::MarginPercent => $margin['default_margin_percent'],
                     CommercialQuoteMarginOverrideType::MarginAmount => $margin['default_margin_amount'],
@@ -309,6 +321,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                 $margin = CommercialQuoteProductMarginCalculator::forLineItem($item);
 
                 $defaultValue = match ($type) {
+                    CommercialQuoteMarginOverrideType::CustomerCost => $margin['default_customer_cost'],
                     CommercialQuoteMarginOverrideType::CustomerAmount => $margin['default_customer_amount'],
                     CommercialQuoteMarginOverrideType::MarginPercent => $margin['default_margin_percent'],
                     CommercialQuoteMarginOverrideType::MarginAmount => $margin['default_margin_amount'],
