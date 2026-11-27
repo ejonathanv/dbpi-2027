@@ -27,6 +27,8 @@ use Filament\Schemas\Schema;
 
 class CommercialQuoteForm
 {
+    public const TABS_PDF_RENDER_HOOK = 'commercial-quote-tabs-pdf-download';
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -42,6 +44,9 @@ class CommercialQuoteForm
                     ])
                     ->columnSpanFull(),
                 Tabs::make('Cotización')
+                    ->endRenderHooks([
+                        self::TABS_PDF_RENDER_HOOK,
+                    ])
                     ->persistTabInQueryString('tab')
                     ->tabs([
                         Tab::make('General')

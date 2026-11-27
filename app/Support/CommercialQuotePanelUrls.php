@@ -15,4 +15,12 @@ final class CommercialQuotePanelUrls
             'record' => $quote,
         ]).'?tab='.self::EDIT_TAB_AUTORIZACIONES;
     }
+
+    public static function downloadPdf(CommercialQuote $quote, string $variant): string
+    {
+        return CommercialQuoteResource::getUrl('download-pdf', [
+            'record' => $quote,
+            'variant' => $variant,
+        ]);
+    }
 }

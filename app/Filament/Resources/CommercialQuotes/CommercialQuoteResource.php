@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CommercialQuotes;
 
 use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CommercialQuotes\Pages\CreateCommercialQuote;
+use App\Filament\Resources\CommercialQuotes\Pages\DownloadCommercialQuotePdf;
 use App\Filament\Resources\CommercialQuotes\Pages\EditCommercialQuote;
 use App\Filament\Resources\CommercialQuotes\Pages\ListCommercialQuotes;
 use App\Filament\Resources\CommercialQuotes\Pages\ReviewCommercialQuoteAuthorization;
@@ -62,6 +63,7 @@ class CommercialQuoteResource extends Resource
             'create' => CreateCommercialQuote::route('/create'),
             'edit' => EditCommercialQuote::route('/{record}/edit'),
             'review-authorization' => ReviewCommercialQuoteAuthorization::route('/{record}/authorization/{authorizationRequest}'),
+            'download-pdf' => DownloadCommercialQuotePdf::route('/{record}/pdf/{variant}'),
         ];
     }
 

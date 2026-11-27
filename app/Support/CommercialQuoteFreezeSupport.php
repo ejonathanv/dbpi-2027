@@ -33,7 +33,7 @@ class CommercialQuoteFreezeSupport
                     'group_title' => $group->title,
                     'line_item_id' => $item->id,
                     'type' => $item->type?->value,
-                    'label' => self::lineLabel($item),
+                    'label' => self::lineItemLabel($item),
                     'margin' => $margin,
                 ];
             }
@@ -47,7 +47,7 @@ class CommercialQuoteFreezeSupport
         ];
     }
 
-    protected static function lineLabel(CommercialQuoteLineItem $item): string
+    public static function lineItemLabel(CommercialQuoteLineItem $item): string
     {
         return match ($item->type) {
             CommercialQuoteLineItemType::Product => (string) ($item->product_alias ?: $item->product?->name ?: 'Producto'),

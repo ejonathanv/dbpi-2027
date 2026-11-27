@@ -4,7 +4,13 @@ namespace App\Providers\Filament;
 
 use App\Enums\PanelNavigationGroup;
 use App\Filament\Pages\EscritorioDashboard;
+use App\Filament\Resources\CommercialQuotes\Pages\EditCommercialQuote;
+use App\Filament\Resources\CommercialQuotes\Schemas\CommercialQuoteForm;
+use App\Models\CommercialQuote;
+use App\Support\CommercialQuotePanelUrls;
+use App\Support\CommercialQuotePdfExporter;
 use App\Support\PanelBrandColors;
+use Livewire\Livewire;
 use Filament\Enums\DatabaseNotificationsPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -68,6 +74,24 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->renderHook(CommercialQuoteForm::TABS_PDF_RENDER_HOOK, function (): string {
+                $livewire = Livewire::current();
+
+                if (! $livewire instanceof EditCommercialQuote) {
+                    return '';
+                }
+
+                /** @var CommercialQuote $quote */
+                $quote = $livewire->getRecord();
+
+                return view('filament.resources.commercial-quotes.pdf-download-toolbar', [
+                    'downloadUrls' => [
+                        'cotizacion' => CommercialQuotePanelUrls::downloadPdf($quote, CommercialQuotePdfExporter::VARIANT_COTIZACION),
+                        'margen' => CommercialQuotePanelUrls::downloadPdf($quote, CommercialQuotePdfExporter::VARIANT_MARGEN),
+                        'todo' => CommercialQuotePanelUrls::downloadPdf($quote, CommercialQuotePdfExporter::VARIANT_TODO),
+                    ],
+                ])->render();
+            }, EditCommercialQuote::class);
     }
 }
