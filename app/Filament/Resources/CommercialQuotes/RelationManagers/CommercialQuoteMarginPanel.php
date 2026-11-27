@@ -70,6 +70,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                     ...$data,
                     'sort_order' => $sortOrder,
                 ]);
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -90,6 +91,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                 CommercialQuoteGroup::query()
                     ->findOrFail($arguments['groupId'])
                     ->update($data);
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -107,6 +109,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                 CommercialQuoteGroup::query()
                     ->findOrFail($arguments['groupId'])
                     ->delete();
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -126,6 +129,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                     CommercialQuoteLineItemType::Product,
                     $data,
                 );
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -145,6 +149,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                     CommercialQuoteLineItemType::Personnel,
                     $data,
                 );
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -164,6 +169,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                     CommercialQuoteLineItemType::Contract,
                     $data,
                 );
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -220,6 +226,7 @@ class CommercialQuoteMarginPanel extends RelationManager
             ->action(function (array $arguments, array $data): void {
                 $item = CommercialQuoteLineItem::query()->findOrFail($arguments['lineItemId']);
                 CommercialQuoteLineItemPersistence::updateLineItem($item, $data);
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -235,6 +242,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                 CommercialQuoteLineItem::query()
                     ->findOrFail($arguments['lineItemId'])
                     ->delete();
+                $this->dispatchQuoteSummaryRefresh();
             });
     }
 
@@ -358,6 +366,7 @@ class CommercialQuoteMarginPanel extends RelationManager
                         'manual_margin_override_type' => null,
                         'manual_margin_override_value' => null,
                     ]);
+                    $this->dispatchQuoteSummaryRefresh();
 
                     return;
                 }
@@ -366,6 +375,12 @@ class CommercialQuoteMarginPanel extends RelationManager
                     'manual_margin_override_type' => $type,
                     'manual_margin_override_value' => $data['manual_value'],
                 ]);
+                $this->dispatchQuoteSummaryRefresh();
             });
+    }
+
+    protected function dispatchQuoteSummaryRefresh(): void
+    {
+        $this->dispatch('commercial-quote-margin-updated');
     }
 }

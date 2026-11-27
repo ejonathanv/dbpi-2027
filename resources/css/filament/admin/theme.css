@@ -360,3 +360,8 @@ html.dark .fi-sidebar-nav,
 html.dark .fi-sidebar-footer {
     background-color: #18181b;
 }
+
+/* Cotización — indicadores superiores (valores más compactos) */
+.commercial-quote-edit-summary .fi-wi-stats-overview-stat-value {
+    @apply text-lg font-semibold tracking-tight;
+}
