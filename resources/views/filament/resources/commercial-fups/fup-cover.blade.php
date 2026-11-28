@@ -2,7 +2,8 @@
     use App\Support\CommercialFupCoverBuilder;
 
     /** @var \App\Models\CommercialFup|null $fup */
-    $cover = $fup ? CommercialFupCoverBuilder::forFup($fup) : [];
+    /** @var array<string, mixed>|null $cover */
+    $cover = $cover ?? ($fup ? CommercialFupCoverBuilder::forFup($fup) : []);
     $shipping = $cover['shipping'] ?? [];
     $billing = $cover['billing'] ?? [];
     $order = $cover['order_info'] ?? [];

@@ -5,6 +5,8 @@ namespace App\Filament\Resources\CommercialFups;
 use App\Enums\PanelNavigationGroup;
 use App\Filament\Resources\CommercialFups\Pages\EditCommercialFup;
 use App\Filament\Resources\CommercialFups\Pages\ListCommercialFups;
+use App\Filament\Resources\CommercialFups\Pages\ReviewCommercialFupAuthorization;
+use App\Support\CommercialFupPanelUrls;
 use App\Filament\Resources\CommercialFups\Schemas\CommercialFupForm;
 use App\Filament\Resources\CommercialFups\Tables\CommercialFupsTable;
 use App\Models\CommercialFup;
@@ -35,6 +37,8 @@ class CommercialFupResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'fup_number';
 
+    public const EDIT_TAB_AUTORIZACIONES = CommercialFupPanelUrls::EDIT_TAB_AUTORIZACIONES;
+
     public static function form(Schema $schema): Schema
     {
         return CommercialFupForm::configure($schema);
@@ -55,6 +59,7 @@ class CommercialFupResource extends Resource
         return [
             'index' => ListCommercialFups::route('/'),
             'edit' => EditCommercialFup::route('/{record}/edit'),
+            'review-authorization' => ReviewCommercialFupAuthorization::route('/{record}/authorization/{authorizationRequest}'),
         ];
     }
 

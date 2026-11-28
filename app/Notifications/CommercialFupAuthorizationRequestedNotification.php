@@ -34,7 +34,9 @@ class CommercialFupAuthorizationRequestedNotification extends Notification imple
     public function toMail(object $notifiable): MailMessage
     {
         $fup = $this->authorizationRequest->fup;
-        $url = $fup ? CommercialFupPanelUrls::editAuthorizationTab($fup) : url('/admin');
+        $url = $fup
+            ? CommercialFupPanelUrls::reviewAuthorization($fup, $this->authorizationRequest)
+            : url('/admin');
 
         return (new MailMessage)
             ->subject('FUP pendiente de autorización')
@@ -51,7 +53,9 @@ class CommercialFupAuthorizationRequestedNotification extends Notification imple
     public function toDatabase(object $notifiable): array
     {
         $fup = $this->authorizationRequest->fup;
-        $url = $fup ? CommercialFupPanelUrls::editAuthorizationTab($fup) : url('/admin');
+        $url = $fup
+            ? CommercialFupPanelUrls::reviewAuthorization($fup, $this->authorizationRequest)
+            : url('/admin');
 
         return FilamentNotification::make()
             ->title('Autorización de FUP')

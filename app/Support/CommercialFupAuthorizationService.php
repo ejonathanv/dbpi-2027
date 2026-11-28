@@ -77,6 +77,43 @@ class CommercialFupAuthorizationService
         });
     }
 
+    public static function resendReviewNotification(CommercialFupAuthorizationReview $review): void
+    {
+        $review->loadMissing(['request.fup', 'user']);
+
+        if ($review->status !== CommercialQuoteAuthorizationReviewStatus::Pending) {
+            throw ValidationException::withMessages([
+                'review' => 'Solo se puede reenviar la solicitud a autorizadores con revisión pendiente.',
+            ]);
+        }
+
+        $request = $review->request;
+
+        if ($request->status !== CommercialQuoteAuthorizationRequestStatus::Pending) {
+            throw ValidationException::withMessages([
+                'review' => 'Esta solicitud de autorización ya no está en curso.',
+            ]);
+        }
+
+        $fup = $request->fup;
+
+        if ($fup->authorization_status !== CommercialQuoteAuthorizationStatus::PendingAuthorization) {
+            throw ValidationException::withMessages([
+                'review' => 'La FUP ya no está pendiente de autorización.',
+            ]);
+        }
+
+        $reviewer = $review->user;
+
+        if (! $reviewer instanceof User) {
+            throw ValidationException::withMessages([
+                'review' => 'No se encontró el usuario autorizador.',
+            ]);
+        }
+
+        $reviewer->notify(new CommercialFupAuthorizationRequestedNotification($request, $review));
+    }
+
     public static function respond(
         CommercialFupAuthorizationReview $review,
         CommercialQuoteAuthorizationReviewStatus $decision,
