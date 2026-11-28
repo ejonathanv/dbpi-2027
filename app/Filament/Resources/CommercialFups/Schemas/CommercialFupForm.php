@@ -11,6 +11,7 @@ use App\Filament\Resources\CommercialQuotes\Pages\EditCommercialQuote;
 use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteAttachmentsPanel;
 use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteMarginPanel;
 use App\Filament\Resources\CommercialQuotes\RelationManagers\CommercialQuoteSummaryPanel;
+use App\Support\CommercialFupPanelUrls;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -39,6 +40,7 @@ class CommercialFupForm
                         Tab::make('Contratos')
                             ->schema(fn (string $operation): array => self::contractsSchema($operation)),
                         Tab::make('Autorizaciones')
+                            ->id(CommercialFupPanelUrls::EDIT_TAB_AUTORIZACIONES)
                             ->schema(fn (string $operation): array => CommercialFupAuthorizationTab::tabSchema($operation)),
                     ])
                     ->columnSpanFull(),

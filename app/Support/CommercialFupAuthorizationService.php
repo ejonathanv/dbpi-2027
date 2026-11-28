@@ -10,6 +10,8 @@ use App\Models\CommercialFupAuthorizationRequest;
 use App\Models\CommercialFupAuthorizationReview;
 use App\Models\CommercialQuoteAuthorizer;
 use App\Models\User;
+use App\Notifications\CommercialFupAuthorizationRequestedNotification;
+use App\Notifications\CommercialFupAuthorizationRespondedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -58,11 +60,17 @@ class CommercialFupAuthorizationService
             ]);
 
             foreach ($reviewerUserIds as $userId) {
-                CommercialFupAuthorizationReview::query()->create([
+                $review = CommercialFupAuthorizationReview::query()->create([
                     'commercial_fup_authorization_request_id' => $authorizationRequest->getKey(),
                     'user_id' => $userId,
                     'status' => CommercialQuoteAuthorizationReviewStatus::Pending,
                 ]);
+
+                $reviewer = User::query()->find($userId);
+
+                if ($reviewer instanceof User) {
+                    $reviewer->notify(new CommercialFupAuthorizationRequestedNotification($authorizationRequest, $review));
+                }
             }
 
             return $authorizationRequest;
@@ -124,5 +132,41 @@ class CommercialFupAuthorizationService
                 ]);
             }
         });
+
+        $review->refresh()->loadMissing(['user', 'request.fup', 'request.requester']);
+
+        self::notifyStakeholdersOfReviewResponse($review);
+    }
+
+    protected static function notifyStakeholdersOfReviewResponse(CommercialFupAuthorizationReview $review): void
+    {
+        $request = $review->request;
+        $fup = $request?->fup;
+
+        if (! $request || ! $fup) {
+            return;
+        }
+
+        $recipientIds = array_values(array_unique(array_filter([
+            $request->requested_by_user_id,
+            $fup->created_by_user_id,
+        ])));
+
+        if ($recipientIds === []) {
+            return;
+        }
+
+        $reviewerId = $review->user_id;
+
+        User::query()
+            ->whereIn('id', $recipientIds)
+            ->get()
+            ->each(function (User $recipient) use ($review, $reviewerId): void {
+                if ($recipient->getKey() === $reviewerId) {
+                    return;
+                }
+
+                $recipient->notify(new CommercialFupAuthorizationRespondedNotification($review));
+            });
     }
 }
